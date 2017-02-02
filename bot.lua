@@ -1011,7 +1011,7 @@ local res = http.request(database.."joke.db")
         tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
       end
 if input:match("^[#!/][Hh]elp$") and is_mod(msg) or input:match("^[Hh]elp$") and is_mod(msg) or input:match("^راهنما$") and is_mod(msg) then
-        local text = "🏅`راهنماي فارسي انگليسي ورژن 3`:".."\n"
+        local text = "🏅`راهنماي فارسي انگليسي ورژن 4`:".."\n"
 	.."🏅قفل ها:\n"
         .."🏅 *lock flood* = `قفل حساسیت`\n"
         .."🏅 *lock link* = `قفل لینک`\n"
@@ -1062,11 +1062,11 @@ if input:match("^[#!/][Hh]elp$") and is_mod(msg) or input:match("^[Hh]elp$") and
 	.."🏅 *setrules* = `تنظيم قوانين`\n"
 	.."🏅 *rules* = `قوانين`\n"
 	.."🏅 `شما میتونید از ` *!*,*/*,*#* `یا حتی بدون این علائم برای ارسال دستور استفاده کنید`\n"
-        .."🏅  ورژن3سناتور لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ\n
+        .."🏅  ورژن4سناتور لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ\n
         tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
       end
 if input:match("^[#!/][Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^[Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^سناتور$") and is_mod(msg) then
-        local text = "🏅 خداي سناتور ورژن 3: \n"
+        local text = "🏅 خداي سناتور ورژن 4: \n"
 	.." سناتور رباتي قدرتمند جهت مديريت سوپرگروه: \n"
         .."🏅 نوشته شده برپايه tdcli(New TG) \n"
         .."🏅 پشتيباني از قفل اديت وسنجاق \n"
