@@ -733,18 +733,18 @@ local res = http.request(database.."joke.db")
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute all$") and is_mod(msg) and groups then
         if redis:get('mute_alltg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_alltg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute all$") and is_mod(msg) and groups then
         if not redis:get('mute_alltg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_alltg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute All has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
 
@@ -752,136 +752,136 @@ local res = http.request(database.."joke.db")
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute sticker$") and is_mod(msg) and groups then
         if redis:get('mute_stickertg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_stickertg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute sticker$") and is_mod(msg) and groups then
         if not redis:get('mute_stickertg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_stickertg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute sticker has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute gift
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute gift$") and is_mod(msg) and groups then
         if redis:get('mute_gifttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_gifttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute gift$") and is_mod(msg) and groups then
         if not redis:get('mute_gifttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift is already disabled\nchannel:  @Senator_teaa', 1, 'md')
         else
           redis:del('mute_gifttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute gift has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute contact
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute contact$") and is_mod(msg) and groups then
         if redis:get('mute_contacttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_contacttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute contact$") and is_mod(msg) and groups then
         if not redis:get('mute_contacttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_contacttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute contact has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute photo
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute photo$") and is_mod(msg) and groups then
         if redis:get('mute_phototg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_phototg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute photo$") and is_mod(msg) and groups then
         if not redis:get('mute_phototg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_phototg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute photo has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute audio
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute audio$") and is_mod(msg) and groups then
         if redis:get('mute_audiotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_audiotg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute audio$") and is_mod(msg) and groups then
         if not redis:get('mute_audiotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_audiotg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute audio has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute voice
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute voice$") and is_mod(msg) and groups then
         if redis:get('mute_voicetg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_voicetg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute voice$") and is_mod(msg) and groups then
         if not redis:get('mute_voicetg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_voicetg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute voice has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute video
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute video$") and is_mod(msg) and groups then
         if redis:get('mute_videotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_videotg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute video$") and is_mod(msg) and groups then
         if not redis:get('mute_videotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_videotg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute video has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute document
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute document$") and is_mod(msg) and groups then
         if redis:get('mute_documenttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_documenttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute document$") and is_mod(msg) and groups then
@@ -889,25 +889,25 @@ local res = http.request(database.."joke.db")
           tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_documenttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute document has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --mute  text
       groups = redis:sismember('groups',chat_id)
       if input:match("^[#!/][Mm]ute text$") and is_mod(msg) and groups then
         if redis:get('mute_texttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text is already on*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text is already on\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:set('mute_texttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text has been enabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text has been enabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       if input:match("^[#!/][Uu]nmute text$") and is_mod(msg) and groups then
         if not redis:get('mute_texttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text is already disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text is already disabled\nchannel:  @Senator_tea*', 1, 'md')
         else
           redis:del('mute_texttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text has been disabled*\nchannel:  @Senator_tea', 1, 'md')
+          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Mute text has been disabled\nchannel:  @Senator_tea*', 1, 'md')
         end
       end
       --settings
@@ -1008,61 +1008,6 @@ local res = http.request(database.."joke.db")
         .."*Mute Document : *".."`"..document.."`".."\n"
         .."*Mute Text : *".."`"..text1.."`".."\n"
         .."🏅 ورژن 4 سناتور  لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ"
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
-      end
-if input:match("^[#!/][Hh]elp$") and is_mod(msg) or input:match("^[Hh]elp$") and is_mod(msg) or input:match("^راهنما$") and is_mod(msg) then
-        local text = "🏅`راهنماي فارسي انگليسي ورژن 4`:".."\n"
-	.."🏅قفل ها:\n"
-        .."🏅 *lock flood* = `قفل حساسیت`\n"
-        .."🏅 *lock link* = `قفل لینک`\n"
-        .."🏅 *lock tag* = `قفل تگ`\n"
-        .."🏅 *lock username* = `قفل نام کاربری`\n"
-        .."🏅 *lock forward* = `قفل فروارد`\n"
-        .."🏅 *Lock Arabic/Persian* = ` قفل فارسی،عربی`\n"
-        .."🏅 *lock english* = `قفل انگلیسی`\n"
-        .."🏅 *lock reply* = `قفل پاسخ`\n"
-        .."🏅 *lock badwords* = `قفل کلمات زشت`\n"
-        .."🏅 *lock edit* = `قفل ویرایش`\n"
-        .."🏅 *lock caption* = `قفل کپشن`\n"
-        .."🏅 *lock inline* = `قفل اینلاین`\n"
-        .."🏅 *lock emoji* = `قفل ایموجی`\n"
-	.."🏅_برای باز کردن قفل ها بجای_ *lock* _از_ *unlock* _` _استفاده کنید_:\n"
-        .."*.................................*".."\n"
-        .."🏅 *lock flood* = `قفل حساسیت`\n"
-        .."🏅 *lock link* = `قفل لینک`\n"
-        .."🏅 *lock tag* = `قفل تگ`\n"
-        .."🏅 *lock username* = `قفل نام کاربری`\n"
-        .."🏅 *lock forward* = `قفل فروارد`\n"
-        .."🏅 *lock persian* = `قفل فارسی`\n"
-        .."🏅 *lock english* = `قفل انگلیسی`\n"
-        .."🏅 *lock reply* = `قفل پاسخ`\n"
-        .."🏅 *lock badwords* = `قفل کلمات زشت`\n"
-        .."🏅 *lock edit* = `قفل ویرایش`\n"
-        .."🏅 *lock caption* = `قفل کپشن`\n"
-        .."🏅 *lock inline* = `قفل اینلاین`\n"
-        .."🏅 *lock emoji* = `قفل ایموجی`\n"
-	.."🏅_برای باز کردن قفل ها بجای_ *lock* _از_ *unlock* _و در فارسی بجای_ `قفل` از `بازکردن` _استفاده کنید_:\n"
-        .."*.................................*".."\n"
-	.."🏅_برای باز کردن ممنوعیت ها بجای_ *mute* _از_ *unmute* _و در فارسی بجای_ `ممنوعیت` از `-ممنوعیت` _استفاده کنید_:\n"
-	.."🏅متفرقه"
-        .."🏅 *promote [reply/id]* = `ارتقا [ایدی/ریپلای]`\n"
-	.."🏅 *demote [reply/id]* = `عزل [ایدی/ریپلای]`\n"
-	.."🏅 *pin [reply]* = `سنجاق [ریپلای]`\n"
-	.."🏅 *unpin* = `حذف سنجاق`\n"
-	.."🏅 *kick* = `اخراج`\n"
-	.."🏅 *muteuser* = `ساکت کردن`\n"
-	.."🏅 *unmuteuser* = `-ساکت کردن`\n"
-	.."🏅 *muteusers* = `لیست ساکت شدگان`\n"
-	.."🏅 *setname* = `تنظیم نام`\n"
-	.."🏅 *edit* = `ویرایش`\n"
-	.."🏅 *del* = `حذف`\n"
-        .."🏅 *joke* = `جوک`\n"
-        .."🏅 *setlink* = `تنظيم لينک`\n"
-        .."🏅 *link* = `لينک`\n"        
-	.."🏅 *setrules* = `تنظيم قوانين`\n"
-	.."🏅 *rules* = `قوانين`\n"
-	.."🏅 `شما میتونید از ` *!*,*/*,*#* `یا حتی بدون این علائم برای ارسال دستور استفاده کنید`\n"
-        .."🏅  ورژن4سناتور لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ"
         tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
       end
 if input:match("^[#!/][Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^[Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^سناتور$") and is_mod(msg) then
