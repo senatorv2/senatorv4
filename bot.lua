@@ -1007,7 +1007,7 @@ local res = http.request(database.."joke.db")
         .."*Mute Video : *".."`"..video.."`".."\n"
         .."*Mute Document : *".."`"..document.."`".."\n"
         .."*Mute Text : *".."`"..text1.."`".."\n"
-        .."🏅 ورژن 4 سناتور  لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ\n"
+        .."🏅 ورژن 4 سناتور  لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ"
         tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
       end
 if input:match("^[#!/][Hh]elp$") and is_mod(msg) or input:match("^[Hh]elp$") and is_mod(msg) or input:match("^راهنما$") and is_mod(msg) then
@@ -1062,7 +1062,7 @@ if input:match("^[#!/][Hh]elp$") and is_mod(msg) or input:match("^[Hh]elp$") and
 	.."🏅 *setrules* = `تنظيم قوانين`\n"
 	.."🏅 *rules* = `قوانين`\n"
 	.."🏅 `شما میتونید از ` *!*,*/*,*#* `یا حتی بدون این علائم برای ارسال دستور استفاده کنید`\n"
-        .."🏅  ورژن4سناتور لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ\n
+        .."🏅  ورژن4سناتور لینک گروه پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ"
         tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
       end
 if input:match("^[#!/][Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^[Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^سناتور$") and is_mod(msg) then
@@ -1074,7 +1074,7 @@ if input:match("^[#!/][Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:m
         .."🏅 لانچ شدن خودکار هر 3دقيقه \n"
         .."🏅  ديباگ شده و قدرتمند \n"
         .."🏅  ويرايش و ارتقا: \n@Lv_t_m \n"       
-        .."🏅 سرور: #المان \nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ\n"
+        .."🏅 سرور: #المان \nhttps://telegram.me/joinchat/AAAAAEApYbVX4kzYqYKMjQ"
         .." ................................. "
         tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
       end
