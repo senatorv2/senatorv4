@@ -1,10 +1,10 @@
-# [TeleMute](https://github.com/MutePuker/TeleMute)
+# [senator](https://github.com/senatorv2/senatorv4)
 *TG-CLI based broadcasting bot!*
 # Install
 ```
 cd $HOME
-git clone https://github.com/MutePuker/TeleMute.git
-cd TeleMute
+git clone https://github.com/senatorv2/senatorv4.git
+cd senatorv4
 chmod +x install.sh
 chmod +x launch.sh
 chmod +x tg
@@ -14,10 +14,10 @@ chmod +x tg
 ```
 Create a bot!
 # Help And More...
-send ```Your PM``` to @MutePukerBot in telegram
+send ```Your PM``` to @Lv_t_m in telegram
 # Developers
-* [@MutePuker](https://telegram.me/MutePuker) - Shervin
-* [@amirhossein_h_h_h](https://telegram.me/amirhossein_h_h_h) - amirhosein
+* [@Lv_t_m](https://telegram.me/Lv_t_m) - senator
+ [@amirhossein_h_h_h](https://telegram.me/amirhossein_h_h_h) - amirhosein
 
 # Commands
 
@@ -80,4 +80,4 @@ send ```Your PM``` to @MutePukerBot in telegram
 > [!/]unmute all 
 >>>UnMute All MSG To Group
 
-<b>Powered By MuteTeam</b>
+<b>Powered By senatortem</b>
