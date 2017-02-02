@@ -17,8 +17,7 @@ Create a bot!
 send ```Your PM``` to @Lv_t_m in telegram
 # Developers
 * [@Lv_t_m](https://telegram.me/Lv_t_m) - senator
- [@amirhossein_h_h_h](https://telegram.me/amirhossein_h_h_h) - amirhosein
-
+ 
 # Commands
 
 ### All Commands
