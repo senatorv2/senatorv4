@@ -1,35 +1,25 @@
-package.path = package.path .. ';.luarocks/share/lua/5.2/?.lua'
-.. ';.luarocks/share/lua/5.2/?/init.lua'
-package.cpath = package.cpath .. ';.luarocks/lib/lua/5.2/?.so'
-
--- @Senator_tea
-http = require("socket.http")
-https = require("ssl.https")
-http.TIMEOUT = 10
-JSON = require('dkjson')
--------@Senator_tea
-tdcli = dofile('tdcli.lua')
-redis = (loadfile "./libs/redis.lua")()
-serpent = require('serpent')
-serp = require 'serpent'.block
-sudo_users = {
-  170146015,
-  204507468,
-  196568905
-}
-
-function string:split(sep)
-  local sep, fields = sep or ":", {}
-  local pattern = string.format("([^%s]+)", sep)
-  self:gsub(pattern, function(c)
-    fields[#fields + 1] = c
-  end)
-  return fields
+﻿sudo = {170146015,204507468,196568905,}
+--CerNerTm
+bot = dofile('utils.lua')
+json = dofile('json.lua')
+URL = require "socket.url"
+serpent = require("serpent")
+http = require "socket.http"
+https = require "ssl.https"
+redis = require('redis')
+db = redis.connect('127.0.0.1', 6379)
+bot_id = db:get('bot_id')
+function vardump(value)
+  print(serpent.block(value, {comment=false}))
+end
+function dl_cb(arg, data)
+ -- isdade
+  --ads
 end
 
 function is_sudo(msg)
   local var = false
-  for v,user in pairs(sudo_users) do
+  for v,user in pairs(sudo) do
     if user == msg.sender_user_id_ then
       var = true
     end
@@ -37,1174 +27,1260 @@ function is_sudo(msg)
   return var
 end
 
-function is_normal(msg)
-  local chat_id = msg.chat_id_
-  local user_id = msg.sender_user_id_
-  local mutel = redis:sismember('muteusers:'..chat_id,user_id)
-  if mutel then
+function is_owner(msg) 
+  local hash = db:sismember('owners:'..msg.chat_id_,msg.sender_user_id_)
+if hash or is_sudo(msg) then
+return true
+else
+return false
+end
+end
+function is_mod(msg) 
+  local hash = db:sismember('mods:'..msg.chat_id_,msg.sender_user_id_)
+if hash or is_sudo(msg) or is_owner(msg) then
+return true
+else
+return false
+end
+end
+function is_banned(chat,user)
+   local hash =  db:sismember('banned'..chat,user)
+  if hash then
     return true
-  end
-  if not mutel then
-    return false
-  end
-end
--- function owner
-function is_owner(msg)
-  local var = false
-  local chat_id = msg.chat_id_
-  local user_id = msg.sender_user_id_
-  local group_mods = redis:get('owners:'..chat_id)
-  if group_mods == tostring(user_id) then
-    var = true
-  end
-  for v, user in pairs(sudo_users) do
-    if user == user_id then
-      var = true
-    end
-  end
-  return var
-end
---- function promote
-function is_mod(msg)
-  local var = false
-  local chat_id = msg.chat_id_
-  local user_id = msg.sender_user_id_
-  if redis:sismember('mods:'..chat_id,user_id) then
-    var = true
-  end
-  if  redis:get('owners:'..chat_id) == tostring(user_id) then
-    var = true
-  end
-  for v, user in pairs(sudo_users) do
-    if user == user_id then
-      var = true
-    end
-  end
-  return var
-end
--- Print message format. Use serpent for prettier result.
-function vardump(value, depth, key)
-  local linePrefix = ''
-  local spaces = ''
-
-  if key ~= nil then
-    linePrefix = key .. ' = '
-  end
-
-  if depth == nil then
-    depth = 0
-  else
-    depth = depth + 1
-    for i=1, depth do
-      spaces = spaces .. '  '
-    end
-  end
-
-  if type(value) == 'table' then
-    mTable = getmetatable(value)
-    if mTable == nil then
-      print(spaces .. linePrefix .. '(table) ')
     else
-      print(spaces .. '(metatable) ')
-      value = mTable
+    return false
     end
-    for tableKey, tableValue in pairs(value) do
-      vardump(tableValue, depth, tableKey)
-    end
-  elseif type(value)  == 'function' or
-    type(value) == 'thread' or
-    type(value) == 'userdata' or
-    value == nil then --@Senator_tea
-    print(spaces .. tostring(value))
-  elseif type(value)  == 'string' then
-    print(spaces .. linePrefix .. '"' .. tostring(value) .. '",')
-  else
-    print(spaces .. linePrefix .. tostring(value) .. ',')
   end
+function is_filter(msg,value)
+ local list = db:smembers('filters:'..msg.chat_id_)
+ var = false
+  for i=1, #list do
+    if value:match(list[i]) then
+      var = true
+    end
+    end
+    return var
+  end
+function is_muted(chat,user)
+   local hash =  db:sismember('mutes'..chat,user)
+  if hash then
+    return true
+    else
+    return false
+    end
+  end
+function priv(chat,user)
+  local ohash = db:sismember('owners:'..chat,user)
+  local mhash = db:sismember('mods:'..chat,user)
+ if tonumber(SUDO) == tonumber(user) or mhash or ohash then
+   return true
+    else
+    return false
+    end
+  end
+function kick(msg,chat,user)
+  if tonumber(user) == tonumber(bot_id) then
+    return false
+    end
+  if priv(chat,user) then
+      bot.sendMessage(msg.chat_id_, msg.id_, 1, "\n<b>You Can't Kick Admins/Mod/Sudo/Owner,</b>", 'html')
+    else
+  bot.changeChatMemberStatus(chat, user, "Kicked")
+    end
+  end
+function ban(msg,chat,user)
+  if tonumber(user) == tonumber(bot_id) then
+    return false
+    end
+  if priv(chat,user) then
+      bot.sendMessage(msg.chat_id_, msg.id_, 1, "\n<b>You Can't Ban Admins/Mod/Sudo/Owner,</b>", 'html')
+    else
+  bot.changeChatMemberStatus(chat, user, "Kicked")
+  db:sadd('banned'..chat,user)
+  local t = 'User (<code>'..user..'</code>)Has Been Banned!'
+  bot.sendMessage(msg.chat_id_, msg.id_, 1, t, 1, 'html')
+  end
+  end
+function mute(msg,chat,user)
+    if tonumber(user) == tonumber(bot_id) then
+    return false
+    end
+  if priv(chat,user) then
+      bot.sendMessage(msg.chat_id_, msg.id_, 1, "\n<b>You Can't Mute Admins/Mod/Sudo/Owner,</b>", 'html')
+    else
+  db:sadd('mutes'..chat,user)
+  local t = '<b>User</b> (<code>'..user..'</code>) <b>Has Been Muted!</b>'
+  bot.sendMessage(msg.chat_id_, msg.id_, 1, t,1, 'html')
+  end
+  end
+function unban(msg,chat,user)
+    if tonumber(user) == tonumber(bot_id) then
+    return false
+    end
+   db:srem('banned'..chat,user)
+  local t = '<b>User</b> (<code>'..user..'</code>) <b>Has Been UnBaned!</b>'
+  bot.sendMessage(msg.chat_id_, msg.id_, 1, t,1, 'html')
+  end
+function unmute(msg,chat,user)
+    if tonumber(user) == tonumber(bot_id) then
+    return false
+    end
+   db:srem('mutes'..chat,user)
+  local t = '<b>User</b> (<code>'..user..'</code>) <b>Has Been UnMuted!!</b>'
+  bot.sendMessage(msg.chat_id_, msg.id_, 1, t,1, 'html')
+  end
+ function delete_msg(chatid,mid)
+  tdcli_function ({ID="DeleteMessages", chat_id_=chatid, message_ids_=mid}, dl_cb, nil)
 end
 
--- Print callback
-function dl_cb(arg, data)
+function settings(msg,value,lock) 
+local hash = 'settings:'..msg.chat_id_..':'..value
+  if value == 'file' then
+      text = 'File'
+   elseif value == 'keysh' then
+    text = 'keysh'
+  elseif value == 'links' then
+    text = 'Links'
+  elseif value == 'game' then
+    text = 'Game'
+    elseif value == 'tag' then
+    text = 'Tag(@)'
+    elseif value == 'hashtag' then
+    text = 'Hashtag(#)'
+   elseif value == 'pin' then
+    text = 'Pin'
+    elseif value == 'photo' then
+    text = 'Photo'
+    elseif value == 'gif' then
+    text = 'Gifs'
+    elseif value == 'video' then
+    text = 'Videos'
+    elseif value == 'voice' then
+    text = 'Voice'
+    elseif value == 'music' then
+    text = 'Music'
+    elseif value == 'text' then
+    text = 'Text'
+    elseif value == 'sticker' then
+    text = 'Stickers'
+    elseif value == 'contact' then
+    text = 'Contact'
+    elseif value == 'forward' then
+    text = 'Fwd'
+    elseif value == 'persian' then
+    text = 'Persian'
+    elseif value == 'english' then
+    text = 'English'
+    elseif value == 'bot' then
+    text = 'Bots'
+    elseif value == 'edit' then
+    text = 'Edit'   
+    elseif value == 'tgservice' then
+    text = 'Tg Service'
+    else return false
+    end
+  if lock then
+db:set(hash,true)
+bot.sendMessage(msg.chat_id_, msg.id_, 1, '<i>✽'..text..'✽</i>  <b>Has Been locked</b>',1,'html')
+    else
+  db:del(hash)
+bot.sendMessage(msg.chat_id_, msg.id_, 1, '<i>✽'..text..'✽</i>  <b>Has Been Disabled In The Group</b>',1,'html')
 end
-
-
-local function setowner_reply(extra, result, success)
-  t = vardump(result)
-  local msg_id = result.id_
-  local user = result.sender_user_id_
-  local ch = result.chat_id_
-  redis:del('owners:'..ch)
-  redis:set('owners:'..ch,user)
-  tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '*🚀 #تایید شد \nیوزر '..user..' *مالک گروه شد*\nکانال:  @Senator_tea*', 1, 'md')
-  print(user)
 end
+function is_lock(msg,value)
+local hash = 'settings:'..msg.chat_id_..':'..value
+ if db:get(hash) then
+    return true 
+    else
+    return false
+    end
+  end
 
-local function deowner_reply(extra, result, success)
-  t = vardump(result)
-  local msg_id = result.id_
-  local user = result.sender_user_id_
-  local ch = result.chat_id_
-  redis:del('owners:'..ch)
-  tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '*🚀 #تایید شد\nیوزر '..user..' *از مالک گروه حذف شد*\nکانال:  @Senator_tea*', 1, 'md')
-  print(user)
+function trigger_anti_spam(msg,type)
+  if type == 'kick' then
+    bot.sendMessage(msg.chat_id_, msg.id_, 1, '\n<b>»Flooding Is Not Allowed Here«</b>\n<b>»ID User:</b> <code>['..msg.sender_user_id_..']</code>\n<b>»Status: User Kicked«</b>', 1,'md')
+    kick(msg,msg.chat_id_,msg.sender_user_id_)
+    end
+  if type == 'ban' then
+    if is_banned(msg.chat_id_,msg.sender_user_id_) then else
+bot.sendMessage(msg.chat_id_, msg.id_, 1, '\n<b>»Flooding Is Not Allowed Here«</b>\n<b>»ID User:</b> <code>['..msg.sender_user_id_..']</code>\n<b>»Status: User Baned«</b>', 1,'md')
+      end
+bot.changeChatMemberStatus(msg.chat_id_, msg.sender_user_id_, "Kicked")
+  db:sadd('banned'..msg.chat_id_,msg.sender_user_id_)
+  end
+  if type == 'mute' then
+    if is_muted(msg.chat_id_,msg.sender_user_id_) then else
+bot.sendMessage(msg.chat_id_, msg.id_, 1, '\n<b>»Flooding Is Not Allowed Here«</b>\n<b>»ID User:</b> <code>['..msg.sender_user_id_..']</code>\n<b>»Status: User Muted«</b>', 1,'md')
+      end
+  db:sadd('mutes'..msg.chat_id_,msg.sender_user_id_)
+  end
+  end
+function televardump(msg,value)
+  local text = json:encode(value)
+  bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 'html')
+  end
+
+function run(msg,data)
+   --vardump(data)
+  --televardump(msg,data)
+      if msg then
+    if not db:sismember('bc',msg.chat_id_) then
+       db:sadd('bc',msg.chat_id_)
+       db:set("charged:"..msg.chat_id_,'waiting')
+        else
+        if chat_type == 'super' then
+          if db:get("charged:"..msg.chat_id_) then
+            if db:ttl("charged:"..msg.chat_id_) and tonumber(db:ttl("charged:"..msg.chat_id_)) < 432000 and not db:get('ekhtar'..msg.chat_id_) then
+        bot.sendMessage(170146015,0,1,"in kiri "..msg.chat_id_.."dare kir mishe tosh",1,'html')
+        db:set('ekhtar'..msg.chat_id_,true)
+      end
+        elseif not db:get("charged:"..msg.chat_id_) then
+        bot.sendMessage(msg.chat_id_,0,1," یا میای پول میدی به من @Lv_t_m یا لفت ",1,'html')
+        bot.sendMessage(170146015,0,1,"شارژ تموم شد؛/ "..msg.chat_id_,1,'html')
+        bot.changeChatMemberStatus(msg.chat_id_, bot_id, "Left")
+        end
+        end       
+      end
+        bot.viewMessages(msg.chat_id_, {[0] = msg.id_})
+        db:incr('total:messages:'..msg.chat_id_..':'..msg.sender_user_id_)
+      if msg.send_state_.ID == "MessageIsSuccessfullySent" then
+      return false 
+      end
+      end
+    if msg.chat_id_ then
+      local id = tostring(msg.chat_id_)
+      if id:match('-021(%d+)') then
+        chat_type = 'super'
+        elseif id:match('^(%d+)') then
+        chat_type = 'user'
+        else
+        chat_type = 'group'
+        end
+      end
+
+local text = msg.content_.text_
+if text and text:match('^تنظیم ساپورت (.*)') then
+  db:set('support',text:match('^تنظیم ساپورت (.*)'))
+  bot.sendMessage(msg.chat_id_, msg.id_, 1,'<>پشتیبانی با موفقیت ثبت شد</i>', 1, 'html')
 end
-
-local database = 'http://vip.opload.ir/vipdl/94/11/amirhmz/'
-local function setmod_reply(extra, result, success)
-vardump(result)
-local msg = result.id_
-local user = result.sender_user_id_
-local chat = result.chat_id_
-redis:sadd('mods:'..chat,user)
-tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '* 🚀 #تایید شد\nیوزر '..user..' *به لیست مدیران اضافه شد*\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-local function remmod_reply(extra, result, success)
-vardump(result)
-local msg = result.id_
-local user = result.sender_user_id_
-local chat = result.chat_id_
-redis:srem('mods:'..chat,user)
-tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '* 🚀 #تایید شد\nیوزر '..user..' *از لیست مدیران حذف شد*\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-function kick_reply(extra, result, success)
-  b = vardump(result)
-  tdcli.changeChatMemberStatus(result.chat_id_, result.sender_user_id_, 'Kicked')
-  tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '*#تایید شد\n🔹یوزر '..result.sender_user_id_..' *کیک شد*\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-function ban_reply(extra, result, success)
-  b = vardump(result)
-  tdcli.changeChatMemberStatus(result.chat_id_, result.sender_user_id_, 'Banned')
-  tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '*#تایید شد\n🔹یوزر '..result.sender_user_id_..' *بن شد*\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-
-local function setmute_reply(extra, result, success)
-  vardump(result)
-  redis:sadd('muteusers:'..result.chat_id_,result.sender_user_id_)
-  tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '*یوزر '..result.sender_user_id_..' به لیست سایت اضافه شد \nکانال:  @Senator_tea*',  1,'md')
-end
-
-local function demute_reply(extra, result, success)
-  vardump(result)
-  redis:srem('muteusers:'..result.chat_id_,result.sender_user_id_)
-  tdcli.sendText(result.chat_id_, 0, 0, 1, nil, '*یوزر '..result.sender_user_id_..' از لیست سایلنت حذف شد\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-
-
-function tdcli_update_callback(data)
-  vardump(data)
-
-  if (data.ID == "UpdateNewMessage") then
-    local msg = data.message_
-    local input = msg.content_.text_
-    local chat_id = msg.chat_id_
-    local user_id = msg.sender_user_id_
-    local reply_id = msg.reply_to_message_id_
-    vardump(msg)
+if text and text:match('^تنظیم لینک (.*)') and is_owner(msg) then
+            local link = text:match('تنظیم لینک (.*)')
+            db:set('grouplink'..msg.chat_id_, link)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<b>New Link Set</b>', 1, 'html')
+            end
+  if text and text:match('[QWERTYUIOPASDFGHJKLZXCVBNM]') then
+    text = text:lower()
+    end    --------- messages type -------------------
     if msg.content_.ID == "MessageText" then
-      if input == "ping" then
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '`pong`', 1, 'md')
-
+      msg_type = 'text'
+    end
+    -------------------------------------------
+    if msg_type == 'text' and text then
+      if text:match('^[/!]') then
+      text = text:gsub('^[/!]','')
       end
-      if input == "PING" then
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>PONG</b>', 1, 'html')
+    end
+  
+                 -- expire
+        local day = 86400
+  if is_sudo(msg) then
+      if text == 'افزودن' and is_sudo(msg) then
+db:set("charged:"..msg.chat_id_,true)
+local text = "سوپرگروه به لیست گروه های مدیریتی ربات اضافه شد!"
+bot.sendMessage(msg.chat_id_,msg.id_,1,text,1,'html')
+end
+if text and text:match('^charge (%d+)$') then
+local time = tonumber(text:match('charge (.*)')) * day
+ db:setex("charged:"..msg.chat_id_,time,true)
+ bot.sendMessage(msg.chat_id_, msg.id_, 1,'ربات با موفقیت تنظیم شد\nمدت فعال بودن ربات در گروه به '..text:match('charge (.*)')..' روز دیگر تنظیم شد...',1,'html')
+    if db:get('ekhtar'..msg.chat_id_) then
+      db:set('ekhtar'..msg.chat_id_,true)
+    end
+end
+    if text == "charge stats" then
+    local ex = db:ttl("charged:"..msg.chat_id_)
+       if ex == -1 then
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, "نامحدود!" , 1 , 'html' )
+       else
+        local d = math.floor(ex / day ) + 1
+        bot.sendMessage(msg.chat_id_, msg.id_, 1,d.." روز تا انقضا گروه باقی مانده", 1 , 'html' )
+       end
+    end
+if text and text:match('^leave(-021)(%d+)$') then
+       bot.sendMessage(msg.chat_id_,msg.id_,1,'ربات با موفقیت از گروه '..text:match('leave(.*)')..' خارج شد.',1,'html')
+       bot.sendMessage(text:match('leave(.*)'),0,1,"اعتبار گروه تمام شده است برای تمدید به @Lv_t_m مراجعه کنید",1,'html')
+     bot.changeChatMemberStatus(text:match('leave(.*)'), bot_id, "Left")
+  end
+  if text and text:match('^plan1(-021)(%d+)$') then
+    if db:get('ekhtar'..msg.chat_id_) then
+      db:set('ekhtar'..msg.chat_id_,true)
+    end
+       local timeplan1 = 2592000
+       db:setex("charged:"..text:match('plan1(.*)'),timeplan1,true)
+       bot.sendMessage(msg.chat_id_,msg.id_,1,'پلن 1 با موفقیت برای گروه '..text:match('plan1(.*)')..' فعال شد\nاین گروه تا 30 روز دیگر اعتبار دارد! ( 1 ماه )',1,'html')
+       bot.sendMessage(text:match('plan1(.*)'),0,1,"ربات با موفقیت فعال شد و تا 30 روز دیگر اعتبار دارد!",1,'html')
+  end
+if text and text:match('^plan2(-021)(%d+)$') then
+      local timeplan2 = 7776000
+       db:setex("charged:"..text:match('plan2(.*)'),timeplan2,true)
+       bot.sendMessage(msg.chat_id_,msg.id_,1,'پلن 2 با موفقیت برای گروه '..text:match('plan2(.*)')..' فعال شد\nاین گروه تا 90 روز دیگر اعتبار دارد! ( 3 ماه )',1,'html')
+       bot.sendMessage(text:match('plan2(.*)'),0,1,"ربات با موفقیت فعال شد و تا 90 روز دیگر اعتبار دارد! ( 3 ماه )",1,'html')
+          if db:get('ekhtar'..msg.chat_id_) then
+      db:set('ekhtar'..msg.chat_id_,true)
+    end
+  end
+  if text and text:match('^plan3(-021)(%d+)$') then
+       db:set("charged:"..text:match('plan3(.*)'),true)
+       bot.sendMessage(msg.chat_id_ ,msg.id_,1,'پلن 3 با موفقیت برای گروه '..text:match('plan3(.*)')..' فعال شد\nاین گروه به صورت نامحدود شارژ شد!',1,'html')
+       bot.sendMessage(text:match('plan3(.*)'),0,1,"ربات بدون محدودیت فعال شد ! ( نامحدود )",1,'html')
+          if db:get('ekhtar'..msg.chat_id_) then
+      db:set('ekhtar'..msg.chat_id_,true)
+    end
+  end
+   if text and text:match('^join(-021)(%d)$') then
+       bot.sendMessage(msg.chat_id_,msg.id_,1,'با موفقیت تورو به گروه '..text:match('join(.*)')..' اضافه کردم.',1,'html')
+       bot.sendMessage(text:match('join(.*)'),0,1,"مدیر ربات به گروه پیوست !",1,'html')
+       bot.addChatMembers(text:match('join(.*)'),{[0] = result.sender_user_id_})
+    end
+  end
+
+     if text then
+      if not db:get('bot_id') then
+         function cb(a,b,c)
+         db:set('bot_id',b.id_)
+         end
+      bot.getMe(cb)
       end
-      if input:match("^ایدی$") then
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>ایدی سوپرگروه : </b><code>'..string.sub(chat_id, 5,14)..'</code>\n<b>ایدی یوزر: </b><code>'..user_id..'</code>\n<b>کانال : </b>@Senator_tea', 1, 'html')
+    end
+  if chat_type == 'user' and not is_sudo(msg) then
+    local text = [[
+__
+    ]]
+    bot.sendMessage(msg.chat_id_, msg.id_, 1, text,1, 'html')
+    end
+  if text and text == 'نرخ' or text == 'nerkh' or text == 'مبلغ' then
+    local text = [[<code> نرخ فروش ربات  :</code>
+
+ <i>- 1 ماهه > 5000 تومان</i>\n<i>- 2 ماهه > 8000 تومان</i>\n<i>- 3 ماهه > 10000 تومان</i>\n<i>سه ماهه +یک ماه :4> 18000 تومان</i>\n<i>سه ماهه +یک ماه :4> 23000 تومان</i>\n<i>سه ماهه +یک ماه :4> 30000 تومان</i>
+ ]]
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, text,1, 'html')
+    end
+    if chat_type == 'super' then
+    NUM_MSG_MAX = 5
+    if db:get('floodmax'..msg.chat_id_) then
+      NUM_MSG_MAX = db:get('floodmax'..msg.chat_id_)
       end
-
-      if input:match("^سنجاق$") and reply_id and is_owner(msg) then
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<b>سنجاق شد✅</b>*', 1, 'html')
-        tdcli.pinChannelMessage(chat_id, reply_id, 1)
+      TIME_CHECK = 3
+    if db:get('floodtime'..msg.chat_id_) then
+      TIME_CHECK = db:get('floodtime'..msg.chat_id_)
       end
-
-      if input:match("^حذف سنجاق$") and reply_id and is_owner(msg) then
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<b>سنجاق حذف شد✅</b>*', 1, 'html')
-        tdcli.unpinChannelMessage(chat_id, reply_id, 1)
+    if text and text:match('test') then
       end
-
-
-      -----------------------------------------------------------------------------------------------------------------------------
-      if input:match('^تنظیم مالک$') and is_owner(msg) and msg.reply_to_message_id_ then
-        tdcli.getMessage(chat_id,msg.reply_to_message_id_,setowner_reply,nil)
+    -- check flood
+    if db:get('settings:flood'..msg.chat_id_) then
+    if not is_mod(msg) then
+      local post_count = 'user:' .. msg.sender_user_id_ .. ':floodc'
+      local msgs = tonumber(db:get(post_count) or 0)
+      if msgs > tonumber(NUM_MSG_MAX) then
+       local type = db:get('settings:flood'..msg.chat_id_)
+        trigger_anti_spam(msg,type)
       end
-      if input == "/delowner" and is_sudo(msg) and msg.reply_to_message_id_ then
-        tdcli.getMessage(chat_id,msg.reply_to_message_id_,deowner_reply,nil)
-      end
-
-      if input:match('^مالک$') then
-        local hash = 'owners:'..chat_id
-        local owner = redis:get(hash)
-        if owner == nil then
-          tdcli.sendText(chat_id, 0, 0, 1, nil, '*🔸گروه مالک ندارد\nکانال:  @Senator_tea *', 1, 'md')
-        end
-        local owner_list = redis:get('owners:'..chat_id)
-        text85 = '👤*Group Owner :*\n\n '..owner_list
-        tdcli.sendText(chat_id, 0, 0, 1, nil, text85, 1, 'md')
-      end
-      if input:match('^[/!#]setowner (.*)') and not input:find('@') and is_sudo(msg) then
-        redis:del('owners:'..chat_id)
-        redis:set('owners:'..chat_id,input:match('^تنظیم مالک(.*)'))
-        tdcli.sendText(chat_id, 0, 0, 1, nil, 'user '..input:match('^تنظیم مالک(.*)')..' *<🚏>مالک گروه شد</🚏>*\nکانال:  @Senator_tea*', 1, 'md')
-      end
-
-      if input:match('^[/!#]setowner (.*)') and input:find('@') and is_owner(msg) then
-        function Inline_Callback_(arg, data)
-          redis:del('owners:'..chat_id)
-          redis:set('owners:'..chat_id,input:match('^تنظیم مالک(.*)'))
-          tdcli.sendText(chat_id, 0, 0, 1, nil, 'یوزر '..input:match('^تنظیم مالک(.*)')..' *<🚏>مالک گروه شد</🚏>\nکانال:  @Senator_tea*', 1, 'md')
-        end
-        tdcli_function ({ID = "SearchPublicChat",username_ =input:match('^تنظیم مالک(.*)')}, Inline_Callback_, nil)
-      end
-
-
-      if input:match('^عزل مالک(.*)') and is_sudo(msg) then
-        redis:del('owners:'..chat_id)
-        tdcli.sendText(chat_id, 0, 0, 1, nil, 'user '..input:match('^عزل مالک(.*)')..'*<b>از لیست مالک حذف شد</b>\nکانال:  @Senator_tea*', 1, 'md')
-      end
-      -----------------------------------------------------------------------------------------------------------------------
-      if input:match('^تنظیم مدیر') and is_sudo(msg) and msg.reply_to_message_id_ then
-tdcli.getMessage(chat_id,msg.reply_to_message_id_,setmod_reply,nil)
-end
-if input:match('^عزل مدیر') and is_sudo(msg) and msg.reply_to_message_id_ then
-tdcli.getMessage(chat_id,msg.reply_to_message_id_,remmod_reply,nil)
-end
-			
-			sm = input:match('^تنظیم مدیر(.*)')
-if sm and is_sudo(msg) then
-  redis:sadd('mods:'..chat_id,sm)
-  tdcli.sendText(chat_id, 0, 0, 1, nil, '*🚀 #تایید شد\nیوزر '..sm..'*<🚏>به لیست مدیران اضافه شد<🚏>*\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-dm = input:match('^عزل مدیر(.*)')
-if dm and is_sudo(msg) then
-  redis:srem('mods:'..chat_id,dm)
-  tdcli.sendText(chat_id, 0, 0, 1, nil, '*🚀 #تایید شد\nیوزر'..dm..'*<🚏>از لیست مدیران حذف شد<🚏>*\nکانال:  @Senator_tea*', 1, 'md')
-end
-
-if input:match('^لیست مدیران') then
-if redis:scard('mods:'..chat_id) == 0 then
-tdcli.sendText(chat_id, 0, 0, 1, nil, '*<🚏>لیست مدیران خالی است<🚏>\nکانال:  @Senator_tea*', 1, 'md')
-end
-local text = "<🚏>لیست مدیران<🚏> : \n"
-for k,v in pairs(redis:smembers('mods:'..chat_id)) do
-text = text.."_"..k.."_ - *"..v.."*\n"
-end
-tdcli.sendText(chat_id, 0, 0, 1, nil, text, 1, 'md')
-end
-						--------------------------------------------------------
-			if input:match('^تنظیم لینک(.*)') and is_owner(msg) then
-redis:set('link'..chat_id,input:match('^تنظیم لینک(.*)'))
-tdcli.sendText(chat_id, 0, 0, 1, nil, '*<🚏>لینک ذخیره شد<🚏>*', 1, 'html')
-end
-
-if input:match('^لینک') and is_owner(msg) then
-link = redis:get('link'..chat_id)
-tdcli.sendText(chat_id, 0, 0, 1, nil, '*<🚏>لینک گروه<🚏>:\n'..link, 1, 'html')
-end
-		-------------------------------------------------------
-		if input:match('^تنظیم قوانین(.*)') and is_owner(msg) then
-redis:set('gprules'..chat_id,input:match('^تنظیم قوانین(.*)'))
-tdcli.sendText(chat_id, 0, 0, 1, nil, '*<b>قوانین ذخیره شد</b>*', 1, 'html')
-end
-
-if input:match('^قوانین') then
-rules = redis:get('gprules'..chat_id)
-tdcli.sendText(chat_id, 0, 0, 1, nil, '*<🚏>قوانین گروه<🚏> :\n'..rules, 1, 'html')
-end
---------------------------------------------------------------------------
-local res = http.request(database.."joke.db")
-	local joke = res:split(",")
- if input:match'[جوک)' then
- local run = joke[math.random(#joke)]
- tdcli.sendText(chat_id, msg.id_, 0, 1, nil, run..'*\n\nکانال:  @Senator_tea*', 1, 'md')
+      db:setex(post_count, tonumber(TIME_CHECK), msgs+1)
+    end
+    end
+-- save pin message id
+  if msg.content_.ID == 'MessagePinMessage' then
+ if is_lock(msg,'pin') and is_owner(msg) then
+ db:set('pinned'..msg.chat_id_, msg.content_.message_id_)
+  elseif not is_lock(msg,'pin') then
+ db:set('pinned'..msg.chat_id_, msg.content_.message_id_)
  end
-      ---------------------------------------------------------------------------------------------------------------------------------
-      if input:match("^اضافه$") and is_sudo(msg) then
-        redis:sadd('groups',chat_id)
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Group Has Been Added By\nchannel:  @Senator_tea* `'..msg.sender_user_id_..'`', 1, 'md')
-      end
-      -------------------------------------------------------------------------------------------------------------------------------------------
-      if input:match("^حذف$") and is_sudo(msg) then
-        redis:srem('groups',chat_id)
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>از لیست گروهای ربات سناتور حذف شد<🚏>\nکانال:  @Senator_tea `'..msg.sender_user_id_..'`*', 1, 'md')
-      end
-      -----------------------------------------------------------------------------------------------------------------------------------------------
-      -----------------------------------------------------------------------
-      if input:match('^کیک$') and is_mod(msg) then
-        tdcli.getMessage(chat_id,reply,kick_reply,nil)
-      end
-
-      if input:match('^کیک(.*)') and not input:find('@') and is_mod(msg) then
-        tdcli.sendText(chat_id, 0, 0, 1, nil, 'یوزر '..input:match('^کیک(.*)')..'* <🚏>کیک شد<🚏>*', 1, 'md')
-        tdcli.changeChatMemberStatus(chat_id, input:match('^کیک(.*)'), '<🚏>کیک شد<🚏>')
-      end
-
-      if input:match('^کیک(.*)') and input:find('@') and is_mod(msg) then
-        function Inline_Callback_(arg, data)
-          tdcli.sendText(chat_id, 0, 0, 1, nil, 'یوزر '..input:match('^کیک(.*)')..'* <🚏>کیک شد<🚏>*', 1, 'md')
-          tdcli.changeChatMemberStatus(chat_id, data.id_, 'Kicked')
-        end
-        tdcli_function ({ID = "SearchPublicChat",username_ =input:match('^کیک(.*)')}, Inline_Callback_, nil)
-      end
-      --------------------------------------------------------
-      ----------------------------------------------------------
-      if input:match('^سایلنت') and is_mod(msg) and msg.reply_to_message_id_ then
-        redis:set('tbt:'..chat_id,'yes')
-        tdcli.getMessage(chat_id,msg.reply_to_message_id_,setmute_reply,nil)
-      end
-      if input:match('^سایلنت') and is_mod(msg) and msg.reply_to_message_id_ then
-        tdcli.getMessage(chat_id,msg.reply_to_message_id_,demute_reply,nil)
-      end
-      mu = input:match('^سایلنت(.*)')
-      if mu and is_mod(msg) then
-        redis:sadd('muteusers:'..chat_id,mu)
-        redis:set('tbt:'..chat_id,'yes')
-        tdcli.sendText(chat_id, 0, 0, 1, nil, '*یوزر '..mu..' <🚏>به لیست سایلنت ها اضافه شد<🚏>\nکانال:  @Senator_tea*', 1, 'md')
-      end
-      umu = input:match('^حذف سایلنت(.*)')
-      if umu and is_mod(msg) then
-        redis:srem('muteusers:'..chat_id,umu)
-        tdcli.sendText(chat_id, 0, 0, 1, nil, '*یوزر '..umu..' <🚏>از لیست سایلنت ها حذف شد<🚏>\nکانال:  @Senator_tea *', 1, 'md')
-      end
-
-      if input:match('^لیست سایلنت ') then
-        if redis:scard('muteusers:'..chat_id) == 0 then
-          tdcli.sendText(chat_id, 0, 0, 1, nil, '*<🚏>لیست سایلنت خالی است<🚏>\nکانال:  @Senator_tea*', 1, 'md')
-        end
-        local text = "<🚏>لیست سایلنت ها<🚏>:\n"
-        for k,v in pairs(redis:smembers('muteusers:'..chat_id)) do
-          text = text.."<b>"..k.."</b> - <b>"..v.."</b>\n"
-        end
-        tdcli.sendText(chat_id, 0, 0, 1, nil, text, 1, 'html')
-      end
-      -------------------------------------------------------
-
-      --lock links
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل لینک$") and is_mod(msg) and groups then
-        if redis:get('lock_linkstg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال لینک از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('lock_linkstg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*#تایید شد\n<🚏>ارسال لینک قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن لینک$")  and is_mod(msg) and groups then
-        if not redis:get('lock_linkstg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال لینک از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('lock_linkstg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏ارسال لینک آزاد شد><🚏>*', 1, 'md')
-        end
-      end
-      --lock username
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل یوزرنیم$") and is_mod(msg) and groups then
-        if redis:get('usernametg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال یوزرنیم از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('usernametg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال یوزرنیم قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن یوزرنیم$") and is_mod(msg) and groups then
-        if not redis:get('usernametg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, ' *<🚏>ارسال یوزرنیم از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('usernametg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال یوزرنیم آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock tag
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل تگ$") and is_mod(msg) and groups then
-        if redis:get('tagtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال تگ از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('tagtg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil,  '*✅ #تایید شد\n<🚏>ارسال تگ قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن تگ$") and is_mod(msg) and groups then
-        if not redis:get('tagtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال تگ از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('tagtg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال تگ آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock forward
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل فروارد$") and is_mod(msg) and groups then
-        if redis:get('forwardtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>فروارد کردن از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('forwardtg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n:<🚏>فروارد کردن قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازرکردن فروارد$") and is_mod(msg) and groups then
-        if not redis:get('forwardtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>فروارد کردن از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('forwardtg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>فروارد کردن آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --arabic/persian
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل عربی$") and is_mod(msg) and groups then
-        if redis:get('arabictg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>استفاده از کلمات عربی از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('arabictg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>استفاده از کلمات عربی قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن عربی$") and is_mod(msg) and groups then
-        if not redis:get('arabictg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>استفاده از کلمات عربی از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('arabictg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>استفاده ا کلمات عربی آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      ---english
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل انگلیسی$") and is_mod(msg) and groups then
-        if redis:get('engtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>استفاده از کلمات انگلیسی از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('engtg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>استفاده از کلمات انگلیسی قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن انگلیسی$") and is_mod(msg) and groups then
-        if not redis:get('engtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil,  '*<🚏>استفاده از کلمات انگلیسی از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('engtg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil,  '*✅ #تایید شد\n<🚏>استفاده از کلمات انگلیسی آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock foshtg
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل کلمات زشت$") and is_mod(msg) and groups then
-        if redis:get('badwordtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>استفاده از کلمات زشت از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('badwordtg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>استفاده از کلمات زشت قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن کلمات زشت$") and is_mod(msg) and groups then
-        if not redis:get('badwordtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>استفاده از کلمات زشت از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('badwordtg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>استفاده از کلمات زشت آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock edit
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل ویرایش$") and is_mod(msg) and groups then
-        if redis:get('edittg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ویرایش از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('edittg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n:<🚏>ویرایش قفل شد<🚏>*',1, 'md')
-        end
-      end
-      if input:match("^بازکردن ویرایش$") and is_mod(msg) and groups then
-        if not redis:get('edittg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ویرایش از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('edittg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ویرایش آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --- lock Caption
-      if input:match("^قفل عنوان$") and is_mod(msg) and groups then
-        if redis:get('captg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال عنوان از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:set('captg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال عنوان قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن عنوان$") and is_mod(msg) and groups then
-        if not redis:get('captg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال عنوان از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('captg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال عنوان آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock emoji
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل ایموجی") and is_mod(msg) and groups then
-        if redis:get('emojitg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال ایموجی از قیل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('emojitg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال ایموجی قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن ایموجی$") and is_mod(msg) and groups then
-        if not redis:get('emojitg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ارسال ایموجی از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('emojitg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ارسال ایموجی آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --- lock inline
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل اینلاین") and is_mod(msg) and groups then
-        if redis:get('inlinetg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>اینلاین  از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('inlinetg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>اینلاین قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن اینلاین$") and is_mod(msg) and groups then
-        if not redis:get('inlinetg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>اینلاین از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('inlinetg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>اینلاین آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      -- lock reply
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل ریپلای") and is_mod(msg) and groups then
-        if redis:get('replytg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ریپلای کردن از قبل قفل بود<🚏>*', 1, 'md')
-        else
-          redis:set('replytg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>ریپلای کردن قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن ریپلای$") and is_mod(msg) and groups then
-        if not redis:get('replytg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ریپلای کردن از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('replytg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n:<🚏>ریپلای کردن آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock tgservice
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل سرویس$") and is_mod(msg) and groups then
-        if redis:get('tgservice:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>سرویس تلگرام از قبل قفل شد<🚏>*', 1, 'md')
-        else
-          redis:set('tgservice:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>سرویس تلگرام قفل شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن سرویس$") and is_mod(msg) and groups then
-        if not redis:get('tgservice:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>سرویس تلگرام از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('tgservice:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>سرویس تلگرام آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --lock flood (by @Flooding)
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^قفل حساسیت") and is_mod(msg) and groups then
-        if redis:get('floodtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>حساسیت تکرار از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('floodtg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>حساسیت تکرار فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن حساسیت$") and is_mod(msg) and groups then
-        if not redis:get('floodtg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>حساسیت به تکرار از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('flood:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*✅ #تایید شد\n<🚏>حساسیت تکرار  آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-
-      --------------------------------
-      ---------------------------------------------------------------------------------
-      local link = 'lock_linkstg:'..chat_id
-      if redis:get(link) then
-        link = "`✅`"
-      else
-        link = "`❎`"
-      end
-
-      local username = 'usernametg:'..chat_id
-      if redis:get(username) then
-        username = "`✅`"
-      else
-        username = "`❎`"
-      end
-
-      local tag = 'tagtg:'..chat_id
-      if redis:get(tag) then
-        tag = "`✅`"
-      else
-        tag = "`❎`"
-      end
-
-      local flood = 'flood:'..chat_id
-      if redis:get(flood) then
-        flood = "`✅`"
-      else
-        flood = "`❎`"
-      end
-
-      local forward = 'forwardtg:'..chat_id
-      if redis:get(forward) then
-        forward = "`✅`"
-      else
-        forward = "`❎`"
-      end
-
-      local arabic = 'arabictg:'..chat_id
-      if redis:get(arabic) then
-        arabic = "`✅`"
-      else
-        arabic = "`❎`"
-      end
-
-      local eng = 'engtg:'..chat_id
-      if redis:get(eng) then
-        eng = "`✅`"
-      else
-        eng = "`❎`"
-      end
-
-      local badword = 'badwordtg:'..chat_id
-      if redis:get(badword) then
-        badword = "`✅`"
-      else
-        badword = "`❎`"
-      end
-
-      local edit = 'edittg:'..chat_id
-      if redis:get(edit) then
-        edit = "`✅`"
-      else
-        edit = "`❎`"
-      end
-
-      local emoji = 'emojitg:'..chat_id
-      if redis:get(emoji) then
-        emoji = "`✅`"
-      else
-        emoji = "`❎`"
-      end
-
-      local caption = 'captg:'..chat_id
-      if redis:get(caption) then
-        caption = "`✅`"
-      else
-        caption = "`❎`"
-      end
-
-      local inline = 'inlinetg:'..chat_id
-      if redis:get(inline) then
-        inline = "`✅`"
-      else
-        inline = "`❎`"
-      end
-
-      local reply = 'replytg:'..chat_id
-      if redis:get(reply) then
-        reply = "`✅`"
-      else
-        reply = "`❎`"
-      end
-      ----------------------------
-      --muteall
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت همه$") and is_mod(msg) and groups then
-        if redis:get('mute_alltg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت همه از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_alltg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت همه از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن همه$") and is_mod(msg) and groups then
-        if not redis:get('mute_alltg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت همه از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_alltg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت همه  آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-
-      --mute sticker
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت استیکر$") and is_mod(msg) and groups then
-        if redis:get('mute_stickertg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت استیکر از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_stickertg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت استیکر از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن استیکر$") and is_mod(msg) and groups then
-        if not redis:get('mute_stickertg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil,'*<🚏>ممنوعیت استیکر از قبل آزاد بود<🚏>*', 1, 'md')
-
-        else
-          redis:del('mute_stickertg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت استیکر آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute gift
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت گیف$") and is_mod(msg) and groups then
-        if redis:get('mute_gifttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil,  '*<🚏>ممنوعیت گیف از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_gifttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت گیف از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن گیف$") and is_mod(msg) and groups then
-        if not redis:get('mute_gifttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت گیف از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_gifttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت گیف آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute contact
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت شماره$") and is_mod(msg) and groups then
-        if redis:get('mute_contacttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت شماره از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_contacttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت شماره از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن شماره$") and is_mod(msg) and groups then
-        if not redis:get('mute_contacttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت شماره از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_contacttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت شماره آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute photo
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت عکس$") and is_mod(msg) and groups then
-        if redis:get('mute_phototg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت عکس از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_phototg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت عکس از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن عکس$") and is_mod(msg) and groups then
-        if not redis:get('mute_phototg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت عکس از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_phototg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت عکس  آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute audio
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت آهنگ$") and is_mod(msg) and groups then
-        if redis:get('mute_audiotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت آهنگ از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_audiotg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت آهنگ از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن آهنگ$") and is_mod(msg) and groups then
-        if not redis:get('mute_audiotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت آهنگ از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_audiotg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت آهنگ  آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute voice
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت صدا$") and is_mod(msg) and groups then
-        if redis:get('mute_voicetg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت صدا از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_voicetg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت صدا از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن صدا$") and is_mod(msg) and groups then
-        if not redis:get('mute_voicetg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت صدا از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_voicetg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت صدا آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute video
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت فیلم$") and is_mod(msg) and groups then
-        if redis:get('mute_videotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت فیلم از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_videotg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت فیلم از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن فیلم$") and is_mod(msg) and groups then
-        if not redis:get('mute_videotg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت فیلم از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_videotg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت فیلم آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute document
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت یاداشت$") and is_mod(msg) and groups then
-        if redis:get('mute_documenttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت یاداشت از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_documenttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت یاداشت از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن یاداشت$") and is_mod(msg) and groups then
-        if not redis:get('mute_documenttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت یاداشت از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_documenttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت یاداشت  آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --mute  text
-      groups = redis:sismember('groups',chat_id)
-      if input:match("^ممنوعیت متن$") and is_mod(msg) and groups then
-        if redis:get('mute_texttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت متن از قبل فعال بود<🚏>*', 1, 'md')
-        else
-          redis:set('mute_texttg:'..chat_id, true)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت متن از فعال شد<🚏>*', 1, 'md')
-        end
-      end
-      if input:match("^بازکردن متن$") and is_mod(msg) and groups then
-        if not redis:get('mute_texttg:'..chat_id) then
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت متن از قبل آزاد بود<🚏>*', 1, 'md')
-        else
-          redis:del('mute_texttg:'..chat_id)
-          tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>ممنوعیت متن  آزاد شد<🚏>*', 1, 'md')
-        end
-      end
-      --settings
-      local all = 'mute_alltg:'..chat_id
-      if redis:get(all) then
-        All = "`🔕`"
-      else
-        All = "`🔔`"
-      end
-
-      local sticker = 'mute_stickertg:'..chat_id
-      if redis:get(sticker) then
-        sticker = "`🔕`"
-      else
-        sticker = "`🔔`"
-      end
-
-      local gift = 'mute_gifttg:'..chat_id
-      if redis:get(gift) then
-        gift = "`🔕`"
-      else
-        gift = "`🔔`"
-      end
-
-      local contact = 'mute_contacttg:'..chat_id
-      if redis:get(contact) then
-        contact = "`🔕`"
-      else
-        contact = "`🔔`"
-      end
-
-      local photo = 'mute_phototg:'..chat_id
-      if redis:get(photo) then
-        photo = "`🔕`"
-      else
-        photo = "`🔔`"
-      end
-
-      local audio = 'mute_audiotg:'..chat_id
-      if redis:get(audio) then
-        audio = "`🔕`"
-      else
-        audio = "`🔔`"
-      end
-
-      local voice = 'mute_voicetg:'..chat_id
-      if redis:get(voice) then
-        voice = "`🔕`"
-      else
-        voice = "`🔔`"
-      end
-
-      local video = 'mute_videotg:'..chat_id
-      if redis:get(video) then
-        video = "`🔕`"
-      else
-        video = "`🔔`"
-      end
-
-      local document = 'mute_documenttg:'..chat_id
-      if redis:get(document) then
-        document = "`🔕`"
-      else
-        document = "`🔔`"
-      end
-
-      local text1 = 'mute_texttg:'..chat_id
-      if redis:get(text1) then
-        text1 = "`🔕`"
-      else
-        text1 = "`🔔`"
-      end
-      if input:match("^تنظیمات$") and is_mod(msg) then
-        local text = "👥 SuperGroup Settings :".."\n"
-        .."⚠*قفل حساسیت=> *".."`"..flood.."`".."\n"
-        .."⚠*قفل لینک=> *".."`"..link.."`".."\n"
-        .."⚠*قفل تگ=> *".."`"..tag.."`".."\n"
-        .."⚠*قفل یوزرنیم=> *".."`"..username.."`".."\n"
-        .."⚠*قفل فروارد=> *".."`"..forward.."`".."\n"
-        .."⚠*قفل عربی=> *".."`"..arabic..'`'..'\n'
-        .."⚠*قفل انگلیسی=> *".."`"..eng..'`'..'\n'
-        .."⚠*قفل ریپلای=> *".."`"..reply..'`'..'\n'
-        .."⚠*قفل فروارد=> *".."`"..badword..'`'..'\n'
-        .."⚠*قفل ویرایش=> *".."`"..edit..'`'..'\n'
-        .."⚠*قفل عنوان=> *".."`"..caption..'`'..'\n'
-        .."⚠*قفل اینلاین=> *".."`"..inline..'`'..'\n'
-        .."⚠*قفل ایموجی=> *".."`"..emoji..'`'..'\n'
-        .."*➖➖➖➖➖➖➖➖➖*".."\n"
-        .."🏮*💈لیست ممنوعیت ها💈 :".."\n"
-        .."🏮*ممنوعیت همه: *".."`"..All.."`".."\n"
-        .."🏮*ممنوعیت استیکر: *".."`"..sticker.."`".."\n"
-        .."🏮*ممنوعیت گیف: *".."`"..gift.."`".."\n"
-        .."🏮*ممنوعیت شماره: *".."`"..contact.."`".."\n"
-        .."🏮*ممنوعیت عکس: *".."`"..photo.."`".."\n"
-        .."🏮*ممنوعین آهنگ: *".."`"..audio.."`".."\n"
-        .."🏮*ممنوعیت صدا: *".."`"..voice.."`".."\n"
-        .."🏮*ممنوعیت فیلم: *".."`"..video.."`".."\n"
-        .."🏮*ممنوعیت یاداشت: *".."`"..document.."`".."\n"
-        .."🏮*ممنوعیت متن: *".."`"..text1.."`".."\n"
-        .."🏮ورژن 4 سناتور  لینک کانال پشتیبانی :\nhttps://telegram.me/joinchat/AAAAAD_2f86VIMKHSEGOlQ"
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
-      end
-if input:match("^[#!/][Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^[Ss][Ee][Nn][Aa][Tt][Oo][Rr]$") and is_mod(msg) or input:match("^سناتور$") and is_mod(msg) then
-        local text = "🔰 خداي سناتور ورژن 4: \n"
-	.."🔰سناتور رباتي قدرتمند جهت مديريت سوپرگروه: \n"
-        .."🏮 نوشته شده برپايه tdcli(New TG) \n"
-        .."🏮 پشتيباني از قفل اديت وسنجاق \n"
-        .."🏮 سرعت بالا بدون جاگذاشتن لينک \n"
-        .."🏮 لانچ شدن خودکار هر 3دقيقه \n"
-        .."🏮  ديباگ شده و قدرتمند \n"
-        .."🏮  ويرايش و ارتقا: \n@Lv_t_m \n"       
-        .."🏮 سرور: #المان \nhttps://telegram.me/joinchat/AAAAAD_2f86VIMKHSEGOlQ \n"
-        .." ➖➖➖➖➖➖➖➖➖"
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, text, 1, 'md')
-      end
-      if input:match("^ارسال$") then
-        tdcli.forwardMessages(chat_id, chat_id,{[0] = reply_id}, 0)
-      end
-
-      if input:match("یورزنیم") and is_sudo(msg) then
-        tdcli.changeUsername(string.sub(input, 11))
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>یوزرنیم به</b>@'..string.sub(input, 11), 1, 'html')
-      end
-
-      if input:match("^[#!/][Ee]cho") then
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, string.sub(input, 7), 1, 'html')
-      end
-
-      if input:match("^تنظیم نام") and is_owner(msg) then
-        tdcli.changeChatTitle(chat_id, string.sub(input, 10), 1)
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>اسم سوپرگروه تغییر یافته به</b><code>'..string.sub(input, 10)..'</code>', 1, 'html')
-      end
-	  
-      if input:match("^چک نام") and is_sudo(msg) then
-        tdcli.changeName(string.sub(input, 13), nil, 1)
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>اسم رباته تغییر یافته به</b><code>'..string.sub(input, 13)..'</code>', 1, 'html')
-      end
-	  
-      if input:match("^چک یوزر") and is_sudo(msg) then
-        tdcli.changeUsername(string.sub(input, 13), nil, 1)
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>وزرنیم رباته تغییر کرد به</b><code>'..string.sub(input, 13)..'</code>', 1, 'html')
-      end
-	  
-      if input:match("^پاک کردن یوزر") and is_sudo(msg) then
-        tdcli.changeUsername('')
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '#تایید شد\nیوزرنیم پاک شد', 1, 'html')
-      end
-	  
-      if input:match("^ویرایش") and is_owner(msg) then
-        tdcli.editMessageText(chat_id, reply_id, nil, string.sub(input, 7), 'html')
-      end
-
-      if input:match("^پاک کردن پرو") and is_sudo(msg) then
-        tdcli.DeleteProfilePhoto(chat_id, {[0] = msg.id_})
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>#تایید شد\nپرو پاکوشد</b>', 1, 'html')
-      end
-
-      if input:match("^دعوت") and is_sudo(msg) then
-        tdcli.addChatMember(chat_id, string.sub(input, 9), 20)
-      end
-	  
-      if input:match("^[#!/][Cc]reatesuper") and is_sudo(msg) then
-        tdcli.createNewChannelChat(string.sub(input, 14), 1, 'My Supergroup, my rules')
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>SuperGroup </b>'..string.sub(input, 14)..' <b>Created</b>', 1, 'html')
-      end
-
-      if input:match("^حذف") and is_mod(msg) and msg.reply_to_message_id_ ~= 0 then
-        tdcli.deleteMessages(msg.chat_id_, {[0] = msg.reply_to_message_id_})
-      end
-
-      if input:match('^[#!/]tosuper') then
-        local gpid = msg.chat_id_
-        tdcli.migrateGroupChatToChannelChat(gpid)
-      end
-
-      if input:match("^هستی") then
-        tdcli.viewMessages(chat_id, {[0] = msg.id_})
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<b>آره هستم</b>', 1, 'html')
-      end
+ end
+ -- check filters
+    if text and not is_mod(msg) then
+     if is_filter(msg,text) then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+      end 
     end
-
-    local input = msg.content_.text_
-    if redis:get('mute_alltg:'..chat_id) and msg and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_stickertg:'..chat_id) and msg.content_.sticker_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_gifttg:'..chat_id) and msg.content_.animation_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_contacttg:'..chat_id) and msg.content_.contact_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_phototg:'..chat_id) and msg.content_.photo_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_audiotg:'..chat_id) and msg.content_.audio_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_voicetg:'..chat_id) and msg.content_.voice_  and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_videotg:'..chat_id) and msg.content_.video_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_documenttg:'..chat_id) and msg.content_.document_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('mute_texttg:'..chat_id) and msg.content_.text_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-    if redis:get('forwardtg:'..chat_id) and msg.forward_info_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-    local is_link_msg = input:match("[Tt][Ee][Ll][Ee][Gg][Rr][Aa][Mm].[Mm][Ee]/") or input:match("[Tt].[Mm][Ee]/")
-    if redis:get('lock_linkstg:'..chat_id) and is_link_msg and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('tagtg:'..chat_id) and input:match("#") and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('usernametg:'..chat_id) and input:match("@") and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('arabictg:'..chat_id) and input:match("[\216-\219][\128-\191]") and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    local is_english_msg = input:match("[a-z]") or input:match("[A-Z]")
-    if redis:get('engtg:'..chat_id) and is_english_msg and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    local is_fosh_msg = input:match("کیر") or input:match("کس") or input:match("کون") or input:match("85") or input:match("جنده") or input:match("ننه") or input:match("ننت") or input:match("مادر") or input:match("قهبه") or input:match("گایی") or input:match("سکس") or input:match("kir") or input:match("kos") or input:match("kon") or input:match("nne") or input:match("nnt")
-    if redis:get('badwordtg:'..chat_id) and is_fosh_msg and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    local is_emoji_msg = input:match("😀") or input:match("😬") or input:match("😁") or input:match("😂") or  input:match("😃") or input:match("😄") or input:match("😅") or input:match("☺️") or input:match("🙃") or input:match("🙂") or input:match("😊") or input:match("😉") or input:match("😇") or input:match("😆") or input:match("😋") or input:match("😌") or input:match("😍") or input:match("😘") or input:match("😗") or input:match("😙") or input:match("😚") or input:match("🤗") or input:match("😎") or input:match("🤓") or input:match("🤑") or input:match("😛") or input:match("😏") or input:match("😶") or input:match("😐") or input:match("😑") or input:match("😒") or input:match("🙄") or input:match("🤔") or input:match("😕") or input:match("😔") or input:match("😡") or input:match("😠") or input:match("😟") or input:match("😞") or input:match("😳") or input:match("🙁") or input:match("☹️") or input:match("😣") or input:match("😖") or input:match("😫") or input:match("😩") or input:match("😤") or input:match("😲") or input:match("😵") or input:match("😭") or input:match("😓") or input:match("😪") or input:match("😥") or input:match("😢") or input:match("🤐") or input:match("😷") or input:match("🤒") or input:match("🤕") or input:match("😴") or input:match("💋") or input:match("❤️")
-    if redis:get('emojitg:'..chat_id) and is_emoji_msg and not is_mod(msg)  then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('captg:'..chat_id) and  msg.content_.caption_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('locatg:'..chat_id) and  msg.content_.location_ and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('inlinetg:'..chat_id) and  msg.via_bot_user_id_ ~= 0 and not is_mod(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('replytg:'..chat_id) and  msg.reply_to_message_id_ and not is_mod(msg) ~= 0 then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-
-    if redis:get('tbt:'..chat_id) and is_normal(msg) then
-      tdcli.deleteMessages(chat_id, {[0] = msg.id_})
-    end
-    -- AntiFlood --
-    local floodMax = 5
-    local floodTime = 2
-    local hashflood = 'floodtg:'..msg.chat_id_
-    if redis:get(hashflood) and not is_mod(msg) then
-      local hash = 'flood:'..msg.sender_user_id_..':'..msg.chat_id_..':msg-num'
-      local msgs = tonumber(redis:get(hash) or 0)
-      if msgs > (floodMax - 1) then
-        tdcli.changeChatMemberStatus(msg.chat_id_, msg.sender_user_id_, "Kicked")
-        tdcli.sendText(msg.chat_id_, msg.id_, 1, 'User _'..msg.sender_user_id_..' has been kicked for #flooding !', 1, 'md')
-        redis:setex(hash, floodTime, msgs+1)
+-- check settings
+    
+     -- lock tgservice
+      if is_lock(msg,'tgservice') then
+        if msg.content_.ID == "MessageChatJoinByLink" or msg.content_.ID == "MessageChatAddMembers" or msg.content_.ID == "MessageChatDeleteMember" then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+        end
+    -- lock pin
+    if is_owner(msg) then else
+      if is_lock(msg,'pin') then
+        if msg.content_.ID == 'MessagePinMessage' then
+      bot.sendMessage(msg.chat_id_, msg.id_, 1, 'Pin Is Locked You Not Owner',1, 'html')
+      bot.unpinChannelMessage(msg.chat_id_)
+          local PinnedMessage = db:get('pinned'..msg.chat_id_)
+          if PinnedMessage then
+             bot.pinChannelMessage(msg.chat_id_, tonumber(PinnedMessage), 0)
+            end
+          end
+        end
       end
+      if is_mod(msg) then
+        else
+       -- lock link
+        if is_lock(msg,'links') then
+          if text then
+        if msg.content_.entities_ and msg.content_.entities_[0] and msg.content_.entities_[0].ID == 'MessageEntityUrl' or msg.content_.text_.web_page_ then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+        end
+            end
+          if msg.content_.caption_ then
+            local text = msg.content_.caption_
+       local is_link = text:match("[Tt][Ee][Ll][Ee][Gg][Rr][Aa][Mm].[Mm][Ee]/") or text:match("[Tt][Ll][Gg][Rr][Mm].[Mm][Ee]/") or text:match('[wW][Ww][Ww].(.*)') or text:match('(.*)[.][Ii][Rr]') or text:match('(.*)[.][Cc][Oo][mM]') or text:match('(.*)[.][Nn][eE][Tt]') or text:match('(.*)[.][mM][Ee]') or text:match('(.*)[.][Bb][Ii][Zz]') or text:match('(.*)[/][Tt][.][Mm][Ee][/]') or text:match('(.*)[Jj][Oo][Ii][Nn][Ee]')
+            if is_link then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+              end
+            end
+        end 
+        -- lock tag
+        if is_lock(msg,'tag') then
+          if text then
+       local is_tag = text:match("@(.*)") or text:match("#(.*)")
+        if is_tag then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+        end
+            end
+          if msg.content_.caption_ then
+            local text = msg.content_.caption_
+       local is_tag = text:match("@(.*)") or text:match("#(.*)") 
+            if is_tag then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+              end
+            end
+        end
+      -- lock Hashtag
+        if is_lock(msg,'hashtag') then
+          if text then
+       local is_tag = text:match("#(.*)") or text:match("@(.*)")
+        if is_tag then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+        end
+            end
+          if msg.content_.caption_ then
+            local text = msg.content_.caption_
+       local is_tag = text:match("#(.*)") or text:match("@(.*)")
+            if is_tag then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+              end
+            end
+        end
+        -- lock sticker 
+        if is_lock(msg,'sticker') then
+          if msg.content_.ID == 'MessageSticker' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+end
+          end
+        -- lock forward
+        if is_lock(msg,'forward') then
+          if msg.forward_info_ then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+          end
+        -- lock edit
+        if is_lock(msg,'edit') then
+          if msg.edit_info_ then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+          end     
+        -- lock photo
+        if is_lock(msg,'photo') then
+          if msg.content_.ID == 'MessagePhoto' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+        end 
+        -- lock file
+        if is_lock(msg,'file') then
+          if msg.content_.ID == 'MessageDocument' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+        end
+      -- lock unsp
+        if is_lock(msg,'unsp') then
+          if msg.reply_markup_ and msg.reply_markup_.ID == 'ReplyMarkupInlineKeyboard' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+        end 
+      -- lock game
+        if is_lock(msg,'game') then
+          if msg.content_.game_ then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+          end
+        end 
+        -- lock music 
+        if is_lock(msg,'music') then
+          if msg.content_.ID == 'MessageAudio' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end
+          end
+        -- lock voice 
+        if is_lock(msg,'voice') then
+          if msg.content_.ID == 'MessageVoice' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end
+          end
+        -- lock gif
+        if is_lock(msg,'gif') then
+          if msg.content_.ID == 'MessageAnimation' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end
+          end 
+        -- lock contact
+        if is_lock(msg,'contact') then
+          if msg.content_.ID == 'MessageContact' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end
+          end
+        -- lock video 
+        if is_lock(msg,'video') then
+          if msg.content_.ID == 'MessageVideo' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+           end
+          end
+        -- lock text 
+        if is_lock(msg,'text') then
+          if msg.content_.ID == 'MessageText' then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end
+          end
+        -- lock persian 
+        if is_lock(msg,'persian') then
+          if text:match('[ضصثقفغعهخحجچپشسيبلاتنمکگظطزرذدئو]') then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end 
+         if msg.content_.caption_ then
+        local text = msg.content_.caption_
+       local is_persian = text:match("[ضصثقفغعهخحجچپشسيبلاتنمکگظطزرذدئو]")
+            if is_persian then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+              end
+            end
+        end
+        -- lock english 
+        if is_lock(msg,'english') then
+          if text:match('[qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM]') then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+            end 
+         if msg.content_.caption_ then
+        local text = msg.content_.caption_
+       local is_english = text:match("[qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM]")
+            if is_english then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+              end
+            end
+        end
+        -- lock bot
+        if is_lock(msg,'bot') then
+       if msg.content_.ID == "MessageChatAddMembers" then
+            if msg.content_.members_[0].type_.ID == 'UserTypeBot' then
+        kick(msg,msg.chat_id_,msg.content_.members_[0].id_)
+              end
+            end
+          end
+      end
+
+-- check mutes
+      local muteall = db:get('muteall'..msg.chat_id_)
+      if msg.sender_user_id_ and muteall and not is_mod(msg) then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+      end
+      if msg.sender_user_id_ and is_muted(msg.chat_id_,msg.sender_user_id_) then
+      delete_msg(msg.chat_id_, {[0] = msg.id_})
+      end
+-- check bans
+    if msg.sender_user_id_ and is_banned(msg.chat_id_,msg.sender_user_id_) then
+      kick(msg,msg.chat_id_,msg.sender_user_id_)
+      end
+    if msg.content_ and msg.content_.members_ and msg.content_.members_[0] and msg.content_.members_[0].id_ and is_banned(msg.chat_id_,msg.content_.members_[0].id_) then
+      kick(msg,msg.chat_id_,msg.content_.members_[0].id_)
+      bot.sendMessage(msg.chat_id_, msg.id_, 1, 'کاربر از گروه بن شده است !',1, 'html')
+      end
+-- welcome
+    local status_welcome = (db:get('status:welcome:'..msg.chat_id_) or 'disable') 
+    if status_welcome == 'enable' then
+          if msg.content_.ID == "MessageChatJoinByLink" then
+        if not is_banned(msg.chat_id_,msg.sender_user_id_) then
+     function wlc(extra,result,success)
+        if db:get('welcome:'..msg.chat_id_) then
+        t = db:get('welcome:'..msg.chat_id_)
+        else
+        t = 'Hi {name}\nWelcome To Group!'
+        end
+      local t = t:gsub('{name}',result.first_name_)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, t,0)
+          end
+        bot.getUser(msg.sender_user_id_,wlc)
+      end
+        end
+        if msg.content_.members_ and msg.content_.members_[0] and msg.content_.members_[0].type_.ID == 'UserTypeGeneral' then
+
+    if msg.content_.ID == "MessageChatAddMembers" then
+      if not is_banned(msg.chat_id_,msg.content_.members_[0].id_) then
+      if db:get('welcome:'..msg.chat_id_) then
+        t = db:get('welcome:'..msg.chat_id_)
+        else
+        t = 'سلام {name}\nخوش امدی!'
+        end
+      local t = t:gsub('{name}',msg.content_.members_[0].first_name_)
+         bot.sendMessage(msg.chat_id_, msg.id_, 1, t,0)
+      end
+        end
+          end
+      end
+      -- locks
+    if text and is_owner(msg) then
+      local lock = text:match('^lock pin$')
+       local unlock = text:match('^unlock pin$')
+      if lock then
+          settings(msg,'pin','lock')
+          end
+        if unlock then
+          settings(msg,'pin')
+        end
+      end 
+    if text and is_mod(msg) then
+       local lock = text:match('^lock (.*)$')
+       local unlock = text:match('^unlock (.*)$')
+      local pin = text:match('^lock pin$') or text:match('^unlock pin$')
+      if pin and is_owner(msg) then
+        elseif pin and not is_owner(msg) then
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<b>Just For Owner</b>',1, 'html')
+        elseif lock then
+          settings(msg,lock,'lock')
+        elseif unlock then
+          settings(msg,unlock)
+        end
+        end
+    
+  -- lock flood settings
+    if text and is_owner(msg) then
+       local hash = 'settings:flood'..msg.chat_id_
+      if text == 'lock flood kick' then
+      db:set(hash,'kick') 
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<i>✽Down✽</i>\n<b>Type Flood Set To</b> <i>»Kick«</i>',1, 'html')
+      elseif text == 'lock flood ban' then
+        db:set(hash,'ban') 
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<i>✽Down✽</i>\n<b>Type Flood Set To</b> <i>»Ban«</i>',1, 'html')
+        elseif text == 'lock flood mute' then
+        db:set(hash,'mute') 
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<i>✽Down✽</i>\n<b>Type Flood Set To</b> <i>»Mute«</i>',1, 'html')
+        elseif text == 'unlock flood' then
+        db:del(hash) 
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<i>✽Flood✽</i>  <b>Has Been Disabled</b>',1, 'html')
+            end
+          end
+       
+        -- sudo
+    if text then
+      if is_sudo(msg) then
+        if text == 'bc' and tonumber(msg.reply_to_message_id_) > 0 then
+          function cb(a,b,c)
+          local text = b.content_.text_
+          local list = db:smembers('bc')
+          for k,v in pairs(list) do
+        bot.sendMessage(v, 0, 1, text,1, 'html')
+          end
+          end
+          bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),cb)
+          end
+        if text == 'fbc' and tonumber(msg.reply_to_message_id_) > 0 then
+          function cb(a,b,c)
+          local list = db:smembers('bc')
+          for k,v in pairs(list) do
+          bot.forwardMessages(v, msg.chat_id_, {[0] = b.id_}, 1)
+          end
+          end
+          bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),cb)
+          end
+        if text == 'leave' then
+            bot.changeChatMemberStatus(msg.chat_id_, bot_id, "Left")
+          end
+        if text == 'setowner' then
+          function prom_reply(extra, result, success)
+        db:sadd('owners:'..msg.chat_id_,result.sender_user_id_)
+        local user = result.sender_user_id_
+         bot.sendMessage(msg.chat_id_, msg.id_, 1, '(<code>'..user..'</code>) <b>Added As Owner</b>', 1, 'html')
+        end
+        if tonumber(msg.reply_to_message_id_) == 0 then
+        else
+           bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),prom_reply)
+          end
+        end
+        if text and text:match('^setowner (%d+)') then
+          local user = text:match('setowner (%d+)')
+          db:sadd('owners:'..msg.chat_id_,user)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '(<code>'..user..'</code>) <b>Added As Owner</b>', 1, 'html')
+      end
+        if text == 'remowner' then
+        function prom_reply(extra, result, success)
+        db:srem('owners:'..msg.chat_id_,result.sender_user_id_)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '(<code>'..user..'</code>) <b>Removed As Owner</b>', 1, 'html')
+        end
+        if tonumber(msg.reply_to_message_id_) == 0 then
+        else
+           bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),prom_reply)  
+          end
+        end
+        if text and text:match('^remowner (%d+)') then
+          local user = text:match('remowner (%d+)')
+         db:srem('owners:'..msg.chat_id_,user)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>'..user..'</code> <b>Removed From Owner List</b>', 1, 'html')
+      end
+        end
+      if text == 'clean owners' or text == 'clean ownerlist' and is_sudo(msg) then
+        db:del('owners:'..msg.chat_id_)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<i>Owner List</i> <b>Has Been Cleand!</b>', 1, 'html')
+        end
+      
+      -- owner
+     if is_owner(msg) then
+        if text == 'clean bots' then
+      local function cb(extra,result,success)
+      local bots = result.members_
+      for i=0 , #bots do
+          kick(msg,msg.chat_id_,bots[i].user_id_)
+          end
+        end
+       bot.channel_get_bots(msg.chat_id_,cb)
+       end
+          if text == 'remlink' then
+            db:del('grouplink'..msg.chat_id_)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<b>Group Link Removed</b>', 1, 'html')
+            end
+            if text and text:match('^setname (.*)') then
+            local name = text:match('^setname (.*)')
+            bot.changeChatTitle(msg.chat_id_, name)
+            end
+        if text == 'welcome enable' then
+          db:set('status:welcome:'..msg.chat_id_,'enable')
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<i>✽Wlc✽</i>  <b>Has Been Enabled</b>', 1, 'html')
+          end
+        if text == 'welcome disable' then
+          db:set('status:welcome:'..msg.chat_id_,'disable')
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<i>✽Wlc✽</i>  <b>Has Been Disabled</b>', 1, 'html')
+          end
+        if text and text:match('^setwelcome (.*)') then
+          local welcome = text:match('^setwelcome (.*)')
+          db:set('welcome:'..msg.chat_id_,welcome)
+          local t = '<i>✽Wlc✽</i> <b>MassAge Saved!</b>\n<i>text:</i>\n<code>'..welcome..'</code>'
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+          end
+        if text == 'resetwelcome' then
+          db:del('welcome:'..msg.chat_id_,welcome)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<i>✽Wlc✽</i> <b>MassAge Has Been Removed!</b>', 1, 'html')
+          end
+        if text == 'owners' or text == 'ownerlist' then
+          local list = db:smembers('owners:'..msg.chat_id_)
+          local t = '<b>Owner List For SuperGroup: </b>\n\n'
+          for k,v in pairs(list) do
+          t = t..k.." - <code>"..v.."</code>\n" 
+          end
+          t = t..'\nFor See Info User\n<code>/whois [ID User]</code>\n Test :\n <code>/whois 234458457</code>'
+          if #list == 0 then
+          t = '<i>No Owners Here</i>'
+          end
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+      end
+    if text == 'promote' then
+        function prom_reply(extra, result, success)
+        db:sadd('mods:'..msg.chat_id_,result.sender_user_id_)
+        local user = result.sender_user_id_
+         bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>'..user..'</code><b> Has Been Promoted!</b>', 1, 'html')
+        end
+        if tonumber(msg.reply_to_message_id_) == 0 then
+        else
+           bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),prom_reply)  
+          end
+        end
+        if text:match('^promote @(.*)') then
+        local username = text:match('^promote @(.*)')
+        function promreply(extra,result,success)
+          if result.id_ then
+        db:sadd('mods:'..msg.chat_id_,result.id_)
+        text ='<code>'..result.id_..'</code><b> Has Been Promoted!</b>'
+            else 
+            text = '<i>User Not Found</i>'
+            end
+           bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+          end
+        bot.resolve_username(username,promreply)
+        end
+        if text == 'demote' then
+        function prom_reply(extra, result, success)
+        db:srem('mods:'..msg.chat_id_,result.sender_user_id_)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>'..result.sender_user_id_..'</code><b> Has Been Demoted!</b>', 1, 'html')
+        end
+        if tonumber(msg.reply_to_message_id_) == 0 then
+        else
+           bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),prom_reply)  
+          end
+        end
+        if text:match('^demote @(.*)') then
+        local username = text:match('^demote @(.*)')
+        function demreply(extra,result,success)
+          if result.id_ then
+        db:srem('mods:'..msg.chat_id_,result.id_)
+        text = 'User (<code>'..result.id_..'</code>) Has Been Demoted'
+            else 
+            text = '<i>User Not Found!</i>'
+            end
+           bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+          end
+        bot.resolve_username(username,demreply)
+        end
+        if text and text:match('^promote (%d+)') then
+          local user = text:match('promote (%d+)')
+          db:sadd('mods:'..msg.chat_id_,user)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, 'User (<code>'..user..'</code>)<b> Has Been Promoted!</b>', 1, 'html')
+      end
+        if text and text:match('^demote (%d+)') then
+          local user = text:match('demote (%d+)')
+         db:srem('mods:'..msg.chat_id_,user)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, 'User (<code>'..user..'</code>)<b> Has Been Demoted!</b>', 1, 'html')
+      end
+  end
+      end
+-- mods
+    if is_mod(msg) then
+      if text and text:match("^edit +(.*)") and msg.reply_to_message_id_ > 0 then
+         bot.editMessageText(msg.chat_id_, msg.reply_to_message_id_, nil, text:match("^edit +(.*)"), 'html')
+        end
+      local function getsettings(value)
+        if value == "charge" then
+       local ex = db:ttl("charged:"..msg.chat_id_)
+       if ex == -1 then
+        return "no set"
+       else
+        local d = math.floor(ex / day ) + 1
+        return d.." day"
+       end
+        elseif value == 'muteall' then
+        local hash = db:get('muteall'..msg.chat_id_)
+        if hash then
+         return '<code>|Enabled|</code>'
+          else
+          return '<b>|Disabled|</b>'
+          end
+        elseif value == 'welcome' then
+        local hash = db:get('welcome:'..msg.chat_id_)
+        if hash == 'enable' then
+         return '<code>||</code>'
+          else
+          return '<b>|Disabled|</b>'
+          end
+        elseif value == 'spam' then
+        local hash = db:get('settings:flood'..msg.chat_id_)
+        if hash then
+            if db:get('settings:flood'..msg.chat_id_) == 'kick' then
+         return '|<i>Kick</i>|'
+              elseif db:get('settings:flood'..msg.chat_id_) == 'ban' then
+              return '|<i>Ban</i>|'
+              elseif db:get('settings:flood'..msg.chat_id_) == 'mute' then
+              return '|<i>Mute</i>|'
+              end
+          else
+          return '<b>|Disabled|</b>'
+          end
+        elseif is_lock(msg,value) then
+          return '<code>|Enabled|</code>'
+          else
+          return '<b>|Disabled|</b>'
+          end
+        end
+      if text == 'settings' then
+        local text = '<b>Settings Of This Group:</b>\n'
+        ..'\n  ^^^^^^^^^^^^^^^^^^^^^^'
+		..'\n  ✽<b>lock settings</b>✽'
+		..'\n  ^^^^^^^^^^^^^^^^^^^^^^'
+        ..'\n  <i>*》Lock Pin: </i>        '..getsettings('pin')..''
+        ..'\n  <i>》Lock Tag(@): </i>      '..getsettings('tag')..''
+        ..'\n  <i>*》Lock Hashtag(#): </i> '..getsettings('hashtag')..''
+        ..'\n  <i>》Lock Contact: </i>     '..getsettings('contact')..''
+        ..'\n  <i>*》Lock Forward: </i>    '..getsettings('forward')..''
+        ..'\n  <i>》Lock Bots: </i>        '..getsettings('bot')..''
+        ..'\n  <i>*》Lock Games: </i>      '..getsettings('game')..''
+        ..'\n  <i>》Lock Persian: </i>     '..getsettings('persian')..''
+        ..'\n  <i>*》Lock English: </i>    '..getsettings('english')..''
+        ..'\n  <i>》Lock Edit: </i>        '..getsettings('edit')..''
+        ..'\n  <i>*》Lock TG: </i>         '..getsettings('tgservice')..''
+        ..'\n  <i>》Lock Unsp: </i>        '..getsettings('unsp')..''
+        ..'\n  <i>*》Lock Links: </i>      '..getsettings('links')..''
+        ..'\n  <i>》Lock Stickers: </i>    '..getsettings('sticker')..''
+        ..'\n CerNerTM'
+		..'\n  <b>more settinga</b>'
+        ..'\n  <i>Lock Photo: </i>      '..getsettings('photo')..''
+        ..'\n  <i>Lock Video: </i>       '..getsettings('video')..''
+        ..'\n  <i>Lock Voice: </i>      '..getsettings('voice')..''
+        ..'\n  <i>Lock Gifs: </i>        '..getsettings('gif')..''
+        ..'\n  <i>Lock Music: </i>      '..getsettings('music')..''
+        ..'\n  <i>Lock File: </i>        '..getsettings('file')..''
+        ..'\n  <i>Lock Text: </i>       '..getsettings('text')..''
+        ..'\n  <i>Wlc Msg: </i>          '..getsettings('welcome')..''
+        ..'\n  <i>*》Mute All: </i> '..getsettings('muteall')..''
+        ..'\n <i>》Flood sensitivity: </i> '..NUM_MSG_MAX..''
+        ..'\n  <i>*》Flood Time: </i>   '..TIME_CHECK..''
+        ..'\n  <i>》Flood Type </i>   '..getsettings('spam')..''
+		..'\n  <b>✽groupTime : </b>'..getsettings('charge')..''
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+       end
+      if text and text:match('^floodmax (%d+)$') then
+          db:set('floodmax'..msg.chat_id_,text:match('floodmax (.*)'))
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'-----------------------------\n<b>»Flood Has Been Set To: </b>»<code>'..text:match('floodmax (.*)')..'</code>«\n-----------------------------', 1, 'html')
+        end
+        if text and text:match('^floodtime (%d+)$') then
+          db:set('floodtime'..msg.chat_id_,text:match('floodtime (.*)'))
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'-----------------------------\n<b>»Flood Time Has Been Set To: </b>»<code>'..text:match('floodtime (.*)')..'</code>«\n-----------------------------', 1, 'html')
+        end
+        if text == 'link' then
+          local link = db:get('grouplink'..msg.chat_id_) 
+          if link then
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<b>Group Link:</b>\n'..link, 1, 'html')
+            else
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<b>Link Not Set!</b>', 1, 'html')
+            end
+          end
+        if text == 'mute all' then
+          db:set('muteall'..msg.chat_id_,true)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>Mute All</code> <b>Has Been Enabled</b>', 1, 'html')
+          end
+        if text and text:match('^mute all (%d+)[mhs]') or text and text:match('^mute all (%d+) [mhs]') then
+          local matches = text:match('^mute all (.*)')
+          if matches:match('(%d+)h') then
+          time_match = matches:match('(%d+)h')
+          time = time_match * 3600
+          end
+          if matches:match('(%d+)s') then
+          time_match = matches:match('(%d+)s')
+          time = time_match
+          end
+          if matches:match('(%d+)m') then
+          time_match = matches:match('(%d+)m')
+          time = time_match * 60
+          end
+          local hash = 'muteall'..msg.chat_id_
+          db:setex(hash, tonumber(time), true)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>Mute All</code> <b>Has Been Enabled For</b> (<code> '..time..' Sec </code>)', 1, 'html')
+          end
+        if text == 'unmute all' then
+          db:del('muteall'..msg.chat_id_)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>Mute All</code> <b>Has Been Disabled</b>', 1, 'html')
+          end
+        if text == 'mute all status' then
+          local status = db:ttl('muteall'..msg.chat_id_)
+          if tonumber(status) < 0 then
+            t = 'Disabled Time Not Set!'
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+            else
+          t = 'Time For Disabled Time ('..status..')'
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+          end
+          end
+    if text == 'bans' or text == 'banlist' then
+          local list = db:smembers('banned'..msg.chat_id_)
+          local t = '<b>Ban List: </b>\n'
+          for k,v in pairs(list) do
+          t = t..k.." - <code>"..v.."</code>\n" 
+          end
+          t = t..'\nFor See Info User\n<code>/whois [ID User]</code>\n Test :\n <code>/whois 234458457</code>'
+          if #list == 0 then
+          t = '<b>No User In Ban List</b>'
+          end
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+      end
+      if text == 'clean bans' or text == 'clean banlist' then
+        db:del('banned'..msg.chat_id_)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'Ban List Has Been Cleand!', 1, 'html')
+        end
+        if text == 'mutes' or text == 'mutelist' then
+          local list = db:smembers('mutes'..msg.chat_id_)
+          local t = '<b>Mute List: </b>\n'
+          for k,v in pairs(list) do
+          t = t..k.." - <code>"..v.."</code>\n" 
+          end
+          t = t..'\nFor See Info User\n<code>/whois [ID User]</code>\n Test :\n <code>/whois 234458457</code>'
+          if #list == 0 then
+          t = '<b>Mute List: </b> \n'
+          end
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+      end      
+      if text == 'clean mutes' or text == 'clean mutelist' then
+        db:del('mutes'..msg.chat_id_)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'ليست افراد ميوت شده گروه پاک شد !', 1, 'html')
+        end
+      if text == 'kick' and tonumber(msg.reply_to_message_id_) > 0 then
+        function kick_by_reply(extra, result, success)
+        kick(msg,msg.chat_id_,result.sender_user_id_)
+          end
+        bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),kick_by_reply)
+        end
+      if text and text:match('^kick (%d+)') then
+        kick(msg,msg.chat_id_,text:match('kick (%d+)'))
+        end
+      if text and text:match('^kick @(.*)') then
+        local username = text:match('kick @(.*)')
+        function kick_username(extra,result,success)
+          if result.id_ then
+            kick(msg,msg.chat_id_,result.id_)
+            else 
+            text = '<i>User Not Found!</i>'
+            bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+            end
+          end
+        bot.resolve_username(username,kick_username)
+        end
+        if text == 'ban' and tonumber(msg.reply_to_message_id_) > 0 then
+        function banreply(extra, result, success)
+        ban(msg,msg.chat_id_,result.sender_user_id_)
+          end
+        bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),banreply)
+        end
+      if text and text:match('^ban (%d+)') then
+        ban(msg,msg.chat_id_,text:match('ban (%d+)'))
+        end
+      if text and text:match('^ban @(.*)') then
+        local username = text:match('ban @(.*)')
+        function banusername(extra,result,success)
+          if result.id_ then
+            ban(msg,msg.chat_id_,result.id_)
+            else 
+            text = '<i>User Not Found!</i>'
+            bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+            end
+          end
+        bot.resolve_username(username,banusername)
+        end
+      if text == 'unban' and tonumber(msg.reply_to_message_id_) > 0 then
+        function unbanreply(extra, result, success)
+        unban(msg,msg.chat_id_,result.sender_user_id_)
+          end
+        bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),unbanreply)
+        end
+      if text and text:match('^unban (%d+)') then
+        unban(msg,msg.chat_id_,text:match('unban (%d+)'))
+        end
+      if text and text:match('^unban @(.*)') then
+        local username = text:match('unban @(.*)')
+        function unbanusername(extra,result,success)
+          if result.id_ then
+            unban(msg,msg.chat_id_,result.id_)
+            else 
+            text = '<i>User Not Found!</i>'
+            bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+            end
+          end
+        bot.resolve_username(username,unbanusername)
+        end
+        if text == 'mute' and tonumber(msg.reply_to_message_id_) > 0 then
+        function mutereply(extra, result, success)
+        mute(msg,msg.chat_id_,result.sender_user_id_)
+          end
+        bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),mutereply)
+        end
+      if text and text:match('^mute (%d+)') then
+        mute(msg,msg.chat_id_,text:match('mute (%d+)'))
+        end
+      if text and text:match('^mute @(.*)') then
+        local username = text:match('mute @(.*)')
+        function muteusername(extra,result,success)
+          if result.id_ then
+            mute(msg,msg.chat_id_,result.id_)
+            else 
+            text = '<i>User Not Found!</i>'
+            bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+            end
+          end
+        bot.resolve_username(username,muteusername)
+        end
+      if text == 'unmute' and tonumber(msg.reply_to_message_id_) > 0 then
+        function unmutereply(extra, result, success)
+        unmute(msg,msg.chat_id_,result.sender_user_id_)
+          end
+        bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),unmutereply)
+        end
+      if text and text:match('^unmute (%d+)') then
+        unmute(msg,msg.chat_id_,text:match('unmute (%d+)'))
+        end
+      if text and text:match('^unmute @(.*)') then
+        local username = text:match('unmute @(.*)')
+        function unmuteusername(extra,result,success)
+          if result.id_ then
+            unmute(msg,msg.chat_id_,result.id_)
+            else 
+            text = '<i>User Not Found!</i>'
+            bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+            end
+          end
+        bot.resolve_username(username,unmuteusername)
+        end
+         if text == 'invite' and tonumber(msg.reply_to_message_id_) > 0 then
+        function inv_by_reply(extra, result, success)
+        bot.addChatMembers(msg.chat_id_,{[0] = result.sender_user_id_})
+        end
+        bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),inv_by_reply)
+        end
+      if text and text:match('^invite (%d+)') then
+        bot.addChatMembers(msg.chat_id_,{[0] = text:match('invite (%d+)')})
+        end
+      if text and text:match('^invite @(.*)') then
+        local username = text:match('invite @(.*)')
+        function invite_username(extra,result,success)
+          if result.id_ then
+        bot.addChatMembers(msg.chat_id_,{[0] = result.id_})
+            else 
+            text = '<i>User Not Found!</i>'
+            bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+            end
+          end
+        bot.resolve_username(username,invite_username)
+        end
+      if text and text:match('^پاک (%d+)$') then
+        local limit = tonumber(text:match('^پاک (%d+)$'))
+        if limit > 1000 then
+         bot.sendMessage(msg.chat_id_, msg.id_, 1, '<b>شما از عدد های زیر میتوانید استفاده کنید<b> [<code>1-1000</code>]', 1, 'html')
+          else
+         function cb(a,b,c)
+        local msgs = b.messages_
+        for i=1 , #msgs do
+          delete_msg(msg.chat_id_,{[0] = b.messages_[i].id_})
+        end
+        end
+        bot.getChatHistory(msg.chat_id_, 0, 0, limit + 1,cb)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, limit..' پيام اخير گروه پاک شد !', 1, 'html')
+        end
+        end
+      if tonumber(msg.reply_to_message_id_) > 0 then
+    if text == "پاک" then
+        delete_msg(msg.chat_id_,{[0] = tonumber(msg.reply_to_message_id_),msg.id_})
     end
-    -- AntiFlood --
-		elseif data.ID == "UpdateMessageEdited" then
-if redis:get('edittg:'..data.chat_id_) then
-  tdcli.deleteMessages(data.chat_id_, {[0] = tonumber(data.message_id_)})
-end 
+        end
+    if text == 'modlist' then
+          local list = db:smembers('mods:'..msg.chat_id_)
+          local t = '<b>Mod List : </b>\n'
+          for k,v in pairs(list) do
+          t = t..k.." - <code>"..v.."</code>\n" 
+          end
+          t = t..'\nFor See Info User\n<code>/whois [ID User]</code>\n Test :\n <code>/whois 234458457</code>'
+          if #list == 0 then
+          t = '<b>No Mod In Gp</b>'
+          end
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+      end
+      if text == 'clean mods' or text == 'clean modlist' then
+        db:del('mods:'..msg.chat_id_)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<b>Mod List Has Been Cleand</b>', 1, 'html')
+        end
+      if text and text:match('^فیلتر کردن +(.*)') then
+        local w = text:match('^فیلتر کردن +(.*)')
+         db:sadd('filters:'..msg.chat_id_,w)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'»<code>'..w..'</code>« <b>Added To BadWord List!</b>', 1, 'html')
+       end
+      if text and text:match('^پاک کردن +(.*)') then
+        local w = text:match('^پاک کردن +(.*)')
+         db:srem('filters:'..msg.chat_id_,w)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'»<code>'..w..'</code>« <b>پاک شد</b>', 1, 'html')
+       end
+      if text == 'پاک کردن کلمات فیلتر شده' then
+        db:del('filters:'..msg.chat_id_)
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,'<b>اوک!پاک شد</b>', 1, 'html')
+        end
+      if text == 'ادمین' or text == 'لیست ادمین ها' then
+        local function cb(extra,result,success)
+        local list = result.members_
+           local t = '<b>لیست ادمین ها </b>\n'
+          local n = 0
+            for k,v in pairs(list) do
+           n = (n + 1)
+              t = t..n.." - "..v.user_id_.."\n"
+                    end
+          bot.sendMessage(msg.chat_id_, msg.id_, 1,t..'\nبرای دیدن مشخصات یک فرد میتوانید از\n<code>/مشخصات [ایدی عددی]</code>', 1, 'html')
+          end
+       bot.channel_get_admins(msg.chat_id_,cb)
+      end
+      if text == 'کلمات فیلتر شده' then
+          local list = db:smembers('filters:'..msg.chat_id_)
+          local t = '<b>لیست کلمات عبارت است از:</b>\n'
+          for k,v in pairs(list) do
+          t = t..k.." - "..v.."\n" 
+          end
+          if #list == 0 then
+          t = '<b>لیست کلمات فیلتر شده خالی است</b>'
+          end
+  bot.sendMessage(msg.chat_id_, msg.id_, 1,t, 1, 'html')
+      end
+    local msgs = db:get('total:messages:'..msg.chat_id_..':'..msg.sender_user_id_)
+    if msg_type == 'text' then
+        if text then
+      if text:match('^مشخصات @(.*)') then
+        local username = text:match('^whois @(.*)')
+        function id_by_username(extra,result,success)
+          if result.id_ then
+            text = '<b>ایدی : </b><code>'..result.id_..'</code>\n<b>N: </b><code>'..(db:get('total:messages:'..msg.chat_id_..':'..result.id_) or 0)..'</code>'
+            else 
+            text = '<i>Error 502!</i>'
+            end
+           bot.sendMessage(msg.chat_id_, msg.id_, 1, text, 1, 'html')
+          end
+        bot.resolve_username(username,id_by_username)
+        end
+          if text == 'ایدی' then
+            if tonumber(msg.reply_to_message_id_) == 0 then
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<b>ایدی گروه</b> : \n<code>'..msg.chat_id_..'</code>', 1, 'html')
+          end
+            end
+           if text and text:match('whois (%d+)') then
+              local id = text:match('whois (%d+)')
+            local text = ' Click here to view user !'
+            tdcli_function ({ID="SendMessage", chat_id_=msg.chat_id_, reply_to_message_id_=msg.id_, disable_notification_=0, from_background_=1, reply_markup_=nil, input_message_content_={ID="InputMessageText", text_=text, disable_web_page_preview_=1, clear_draft_=0, entities_={[0] = {ID="MessageEntityMentionName", offset_=0, length_=26, user_id_=id}}}}, dl_cb, nil)
+              end
+        if text == "مشخصات" then
+        function id_by_reply(extra, result, success)
+        bot.sendMessage(msg.chat_id_, msg.id_, 1, '<b>ایدی: </b><code>'..result.sender_user_id_..'</code>\n<b>تعداد پیام های ارسالی: </b><code>'..(db:get('total:messages:'..msg.chat_id_..':'..result.sender_user_id_) or 0)..'</code>', 1, 'html')
+        end
+         if tonumber(msg.reply_to_message_id_) == 0 then
+          else
+    bot.getMessage(msg.chat_id_, tonumber(msg.reply_to_message_id_),id_by_reply)
+      end
+        end
+
+          end
+        end
+      end
+      end
+   -- member
+     if text and msg_type == 'text' and not is_muted(msg.chat_id_,msg.sender_user_id_) then
+       if text == "من" then
+         local msgs = db:get('total:messages:'..msg.chat_id_..':'..msg.sender_user_id_)
+         bot.sendMessage(msg.chat_id_, msg.id_, 1, '<code>ایدی شما:</code> <code>'..msg.sender_user_id_..'</code>\n<code>ایدی گروه </code> : \n<code>'..msg.chat_id_..'</code>\n<code>تعداد پیام های ارسالی توسط شما: </code><code>'..msgs..'</code>', 1, 'html')
+      end
+  -- help 
+  if text and text == 'راهنما' then
+    if is_owner(msg) then
+help = [[Soon........! ]]
+    end
+   bot.sendMessage(msg.chat_id_, msg.id_, 1, help, 1, 'md')
+  end
+  end
+function tdcli_update_callback(data)
+    if (data.ID == "UpdateNewMessage") then
+     run(data.message_,data)
+  elseif (data.ID == "UpdateMessageEdited") then
+    data = data
+    local function edited_cb(extra,result,success)
+      run(result,data)
+    end
+     tdcli_function ({
+      ID = "GetMessage",
+      chat_id_ = data.chat_id_,
+      message_id_ = data.message_id_
+    }, edited_cb, nil)
   elseif (data.ID == "UpdateOption" and data.name_ == "my_id") then
-	
-    -- @Senator_tea
     tdcli_function ({
       ID="GetChats",
       offset_order_="9223372036854775807",
