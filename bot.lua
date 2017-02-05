@@ -324,9 +324,9 @@ local res = http.request(database.."joke.db")
  tdcli.sendText(chat_id, msg.id_, 0, 1, nil, run..'*\n\nکانال:  @Senator_tea*', 1, 'md')
  end
       ---------------------------------------------------------------------------------------------------------------------------------
-      if input:match("^اضافه$") and is_sudo(msg) then
+      if input:match("^add$") and is_sudo(msg) then
         redis:sadd('groups',chat_id)
-        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*<🚏>به لیست گروه های ربات سناتور اضافه شد<🚏>\nکانال:  @Senator_tea `'..msg.sender_user_id_..'`*', 1, 'md')
+        tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '*Group Has Been Added By\nchannel:  @Senator_tea* `'..msg.sender_user_id_..'`', 1, 'md')
       end
       -------------------------------------------------------------------------------------------------------------------------------------------
       if input:match("^حذف$") and is_sudo(msg) then
