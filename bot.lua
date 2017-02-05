@@ -756,13 +756,12 @@ local res = http.request(database.."joke.db")
         else
           redis:set('mute_stickertg:'..chat_id, true)
           tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<🚏>ممنوعیت استیکر از فعال شد<🚏>', 1, 'md')
-', 1, 'md')
         end
       end
       if input:match("^بازکردن استیکر$") and is_mod(msg) and groups then
         if not redis:get('mute_stickertg:'..chat_id) then
           tdcli.sendText(chat_id, msg.id_, 0, 1, nil,'<🚏>ممنوعیت استیکر از قبل آزاد بود<🚏>', 1, 'md')
-, 1, 'md')
+
         else
           redis:del('mute_stickertg:'..chat_id)
           tdcli.sendText(chat_id, msg.id_, 0, 1, nil, '<🚏>ممنوعیت استیکر آزاد شد<🚏>', 1, 'md')
